@@ -27,7 +27,8 @@ service QueueService {
 message PushMessageRequest {
   string queue_id = 1;
   PayloadEnvelope envelope = 2;
-  int32 ttl_seconds = 3;
+  // Distinguishes unset from explicit zero for policy/defaulting behavior.
+  optional int32 ttl_seconds = 3;
   google.protobuf.Timestamp available_at = 4;
   string idempotency_key = 5;
 }
@@ -40,8 +41,10 @@ message PushMessageResponse {
 
 message PopMessageRequest {
   string queue_id = 1;
-  int32 visibility_timeout_seconds = 2;
-  int32 wait_timeout_seconds = 3;
+  // Distinguishes unset from explicit zero for consumer timeout semantics.
+  optional int32 visibility_timeout_seconds = 2;
+  // Distinguishes unset from explicit zero for long-poll semantics.
+  optional int32 wait_timeout_seconds = 3;
   string consumer_id = 4;
 }
 
