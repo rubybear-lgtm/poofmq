@@ -4,7 +4,7 @@
 
 BUF_VERSION ?= 1.53.0
 BUF_IMAGE ?= bufbuild/buf:$(BUF_VERSION)
-BUF_DOCKER_RUN = docker run --rm --user "$$(id -u):$$(id -g)" -e XDG_CACHE_HOME=/workspace/.cache -e BUF_CACHE_DIR=/workspace/.cache/buf -v "$(CURDIR)":/workspace -w /workspace $(BUF_IMAGE)
+BUF_DOCKER_RUN = docker run --rm --user "$$(id -u):$$(id -g)" -e XDG_CACHE_HOME=/tmp/xdg-cache -e BUF_CACHE_DIR=/tmp/buf-cache -v "$(CURDIR)":/workspace -w /workspace $(BUF_IMAGE)
 
 infra-up:
 	docker compose up -d redis postgres
@@ -35,7 +35,12 @@ ci-lint-frontend:
 	npm run lint:check
 
 ci-lint-go:
-	cd services/go-api && test -z "$$(gofmt -l .)"
+	@cd services/go-api && files=$$(gofmt -l .); \
+	if [ -n "$$files" ]; then \
+		echo "Files need formatting:"; \
+		echo "$$files"; \
+		exit 1; \
+	fi
 	cd services/go-api && go vet ./...
 
 ci-test-laravel:
