@@ -1,0 +1,60 @@
+services:
+  redis:
+    image: redis:7.4-alpine
+    container_name: poofmq-redis
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: poofmq-postgres
+    environment:
+      POSTGRES_USER: poofmq
+      POSTGRES_PASSWORD: poofmq
+      POSTGRES_DB: poofmq
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U poofmq -d poofmq"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  go-api:
+    build:
+      context: ./services/go-api
+      dockerfile: Dockerfile
+    container_name: poofmq-go-api
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      GO_API_HTTP_PORT: 8080
+      GO_API_LOG_LEVEL: debug
+      GO_API_ALLOW_ORIGIN: http://localhost:8000
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      REDIS_QUEUE: poofmq:default
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: poofmq
+      DB_USERNAME: poofmq
+      DB_PASSWORD: poofmq
+      RAILWAY_ENVIRONMENT_NAME: local
+      RAILWAY_PROJECT_ID: local
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres-data:
