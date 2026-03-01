@@ -9,3 +9,8 @@
 CHANGELOG.md export-ignore
 README.md export-ignore
 .github/workflows/browser-tests.yml export-ignore
+
+gen/go/**/*.pb.go linguist-generated=true
+gen/go/**/*.pb.gw.go linguist-generated=true
+gen/go/**/*_grpc.pb.go linguist-generated=true
+gen/openapi/*.json linguist-generated=true
