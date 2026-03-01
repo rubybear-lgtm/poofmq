@@ -107,4 +107,5 @@ make infra-down  # stop stack
 make full-stack  # start all containers then run portal dev stack
 make proto-generate         # regenerate gRPC, gateway, and OpenAPI artifacts
 make proto-check-generated  # regenerate and fail if tracked artifacts drift
+BUF_VERSION=1.52.0 make proto-generate  # override default buf image version
 ```

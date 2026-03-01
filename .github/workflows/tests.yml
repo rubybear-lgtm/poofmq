@@ -52,13 +52,9 @@ jobs:
       - name: Build Assets
         run: npm run build
 
-      - name: Generate API Artifacts
-        if: matrix.php-version == '8.4'
-        run: make proto-generate
-
       - name: Check Generated Artifact Drift
         if: matrix.php-version == '8.4'
-        run: git diff --exit-code -- buf.lock gen/go gen/openapi
+        run: make proto-check-generated
 
       - name: Tests
         run: ./vendor/bin/pest

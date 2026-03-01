@@ -34,3 +34,4 @@ proto-deps:
 proto-check-generated:
 	$(MAKE) proto-generate
 	git diff --exit-code -- buf.lock gen/go gen/openapi
+	test -z "$$(git ls-files --others --exclude-standard -- buf.lock gen/go gen/openapi)"

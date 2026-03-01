@@ -37,11 +37,11 @@ it('generates gRPC, gateway, and openapi artifacts deterministically', function 
         $projectRoot.'/gen/openapi/poofmq.swagger.json',
     ];
 
-    $dockerCheck = new Process(['docker', '--version']);
+    $dockerCheck = new Process(['docker', 'info']);
     $dockerCheck->run();
 
     if (! $dockerCheck->isSuccessful()) {
-        $this->markTestSkipped('Docker is required to generate proto artifacts in this test.');
+        $this->markTestSkipped('Docker daemon is required to generate proto artifacts in this test.');
     }
 
     $runGenerate = fn () => tap(new Process(['make', 'proto-generate'], $projectRoot), function (Process $process): void {
