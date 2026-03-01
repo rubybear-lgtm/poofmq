@@ -116,7 +116,7 @@ Pull requests are gated by the `ci` GitHub Actions workflow. Configure these job
 
 - `generated-artifacts`: runs `make ci-check-generated` and fails when generated proto/OpenAPI artifacts drift (`buf.lock`, `gen/go`, `gen/openapi`).
 - `laravel-lint`: runs `make ci-lint-laravel` (`composer lint:check` / Pint).
-- `frontend-lint`: runs `make ci-lint-frontend` (Prettier, ESLint, TypeScript checks).
+- `frontend-lint`: runs `make ci-lint-frontend` (Prettier and ESLint checks).
 - `laravel-tests`: runs `make ci-test-laravel` (`php artisan test --compact`).
 - `go-lint`: runs `make ci-lint-go` (`gofmt` drift check + `go vet`).
 - `go-tests`: runs `make ci-test-go` (`go test ./...`).

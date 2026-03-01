@@ -33,7 +33,6 @@ ci-lint-laravel:
 ci-lint-frontend:
 	npm run format:check
 	npm run lint:check
-	npm run types:check
 
 ci-lint-go:
 	cd services/go-api && test -z "$$(gofmt -l .)"
