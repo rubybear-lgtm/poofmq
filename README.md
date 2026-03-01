@@ -70,11 +70,11 @@ php artisan migrate --force
 composer run dev
 ```
 
-Local endpoints:
+Local endpoints (defaults; host ports are configurable):
 - Laravel portal: `http://localhost:8000`
-- Go API: `http://localhost:8080`
-- Redis: `localhost:6379`
-- Postgres: `localhost:5432`
+- Go API: `http://localhost:${GO_API_HOST_PORT:-8080}`
+- Redis: `localhost:${REDIS_HOST_PORT:-6379}`
+- Postgres: `localhost:${POSTGRES_HOST_PORT:-5432}`
 
 ## Environment Ownership Contract
 
