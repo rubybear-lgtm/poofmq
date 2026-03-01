@@ -1,14 +1,23 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/redis/go-redis/v9"
+	poofmqv1 "github.com/rubyapps/poofmq/gen/go/poofmq/v1"
 	"github.com/rubyapps/poofmq-go-api/internal/config"
+	"github.com/rubyapps/poofmq-go-api/internal/queue"
+	"github.com/rubyapps/poofmq-go-api/internal/service"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type health struct {
@@ -21,12 +30,65 @@ type health struct {
 func main() {
 	cfg := config.Load()
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/health", func(writer http.ResponseWriter, request *http.Request) {
+	// Initialize Redis client
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     cfg.RedisAddress(),
+		Password: cfg.RedisPassword,
+		DB:       0,
+	})
+	defer rdb.Close()
+
+	// Test Redis connection
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		log.Printf("warning: failed to connect to Redis at %s: %v", cfg.RedisAddress(), err)
+	}
+	cancel()
+
+	// Initialize queue client with Redis
+	queueClient := queue.NewClient(rdb)
+
+	// Create gRPC server
+	grpcServer := grpc.NewServer()
+	queueService := service.NewQueueServiceServer(queueClient)
+	poofmqv1.RegisterQueueServiceServer(grpcServer, queueService)
+
+	// Start gRPC server on separate port
+	grpcPort := envOrDefault("GO_API_GRPC_PORT", "9090")
+	grpcListener, err := net.Listen("tcp", ":"+grpcPort)
+	if err != nil {
+		log.Fatalf("failed to listen for gRPC: %v", err)
+	}
+
+	go func() {
+		log.Printf("gRPC server starting on :%s (pid=%d)", grpcPort, os.Getpid())
+		if err := grpcServer.Serve(grpcListener); err != nil {
+			log.Fatalf("gRPC server error: %v", err)
+		}
+	}()
+
+	// Create gRPC-Gateway mux
+	ctx := context.Background()
+	gwMux := runtime.NewServeMux()
+
+	// Register gRPC-Gateway handlers
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+	err = poofmqv1.RegisterQueueServiceHandlerFromEndpoint(ctx, gwMux, "localhost:"+grpcPort, opts)
+	if err != nil {
+		log.Fatalf("failed to register gateway: %v", err)
+	}
+
+	// Create HTTP mux for additional endpoints
+	httpMux := http.NewServeMux()
+
+	// Health endpoint
+	httpMux.HandleFunc("/health", func(writer http.ResponseWriter, request *http.Request) {
 		redisStatus := "up"
-		if !canConnect(cfg.RedisAddress(), 2*time.Second) {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		if err := rdb.Ping(ctx).Err(); err != nil {
 			redisStatus = "down"
 		}
+		cancel()
 
 		postgresStatus := "up"
 		if !canConnect(cfg.PostgresAddress(), 2*time.Second) {
@@ -46,18 +108,30 @@ func main() {
 		}
 	})
 
-	mux.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+	// Root endpoint
+	httpMux.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(http.StatusOK)
 		_, _ = writer.Write([]byte("poofmq go api"))
 	})
 
+	// Combine handlers - gRPC-Gateway handles /v1/* paths, httpMux handles others
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Route gRPC-Gateway paths
+		if strings.HasPrefix(r.URL.Path, "/v1/") {
+			gwMux.ServeHTTP(w, r)
+			return
+		}
+		httpMux.ServeHTTP(w, r)
+	})
+
+	// Start HTTP server with gateway
 	server := &http.Server{
 		Addr:              ":" + cfg.HTTPPort,
-		Handler:           mux,
+		Handler:           handler,
 		ReadHeaderTimeout: 3 * time.Second,
 	}
 
-	log.Printf("go-api starting on :%s (pid=%d)", cfg.HTTPPort, os.Getpid())
+	log.Printf("HTTP/Gateway server starting on :%s (pid=%d)", cfg.HTTPPort, os.Getpid())
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("server error: %v", err)
 	}
@@ -74,4 +148,13 @@ func canConnect(address string, timeout time.Duration) bool {
 	}
 
 	return true
+}
+
+func envOrDefault(key string, fallback string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+
+	return value
 }
