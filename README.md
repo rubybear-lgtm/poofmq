@@ -119,7 +119,8 @@ Pull requests are gated by the `ci` GitHub Actions workflow. Configure these job
 - `frontend-lint`: runs `make ci-lint-frontend` (Prettier and ESLint checks).
 - `laravel-tests`: runs `make ci-test-laravel` (`php artisan test --compact`).
 - `go-lint`: runs `make ci-lint-go` (`gofmt` drift check + `go vet`).
-- `go-tests`: runs `make ci-test-go` (`go test ./...`).
+- `go-unit-tests`: runs `make ci-test-go-unit` (all Go tests excluding `TestClientIntegration*`).
+- `go-integration-tests`: runs `make ci-test-go-integration` (`TestClientIntegration*` with Testcontainers + Docker).
 
 For local parity before pushing:
 
@@ -131,5 +132,6 @@ make ci-lint-laravel
 make ci-lint-frontend
 make ci-test-laravel
 make ci-lint-go
-make ci-test-go
+make ci-test-go-unit
+make ci-test-go-integration
 ```
