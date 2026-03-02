@@ -274,3 +274,29 @@ Wayfinder generates TypeScript functions for Laravel routes. Import from `@/acti
 - IMPORTANT: Activate `developing-with-fortify` skill when working with Fortify authentication features.
 
 </laravel-boost-guidelines>
+
+## Cursor Cloud specific instructions
+
+### Services overview
+
+This is a two-brain architecture: a Laravel Portal (management UI, auth, projects, API keys) and a Go API (queue ingress/dequeue). Infrastructure: PostgreSQL 17 and Redis 7.4 via Docker Compose.
+
+### Starting services
+
+1. **Infrastructure**: `docker compose up -d redis postgres` (required before the Laravel app or Go API can function).
+2. **Go API**: The `go-api` Docker service cannot currently be built via `docker compose up go-api` because the Dockerfile's build context (`services/go-api/`) does not include the `gen/go/poofmq/v1` directory referenced by a Go `replace` directive. Run it natively instead: `cd services/go-api && go run ./cmd/server` (set env vars per `services/go-api/.env.example`).
+3. **Laravel Portal**: `composer run dev` starts the PHP server (:8000), queue worker, Pail log tailer, and Vite dev server concurrently. Or use `php artisan serve` for just the web server.
+
+### Running tests
+
+**Critical gotcha**: The Cursor Cloud environment injects system-level environment variables that override `phpunit.xml` `<env>` values (PHPUnit 12 does not force-override existing env vars by default). You **must** extract every `<env name="..." value="..."/>` entry from `phpunit.xml` and pass them as inline env var overrides when running tests. For example: `KEY1=val1 KEY2=val2 ... php artisan test --compact`. Without these overrides, tests will fail with 419 CSRF and other errors because the injected Cloud Agent env vars (for session driver, DB connection, etc.) take precedence over the test-specific values in `phpunit.xml`.
+
+### Linting and formatting
+
+- PHP: `composer lint:check` (Pint) / `vendor/bin/pint --dirty --format agent` to auto-fix.
+- Frontend: `npm run lint:check` (ESLint) and `npm run format:check` (Prettier).
+- Go: `make ci-lint-go` (gofmt + go vet).
+
+### Convenience commands
+
+See `Makefile` and `README.md` for full list. Key ones: `make bootstrap`, `make full-stack`, `make ci-test-laravel`, `make ci-lint-go`, `make ci-test-go-unit`.
