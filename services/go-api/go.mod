@@ -1,3 +1,7 @@
-module github.com/rubyapps/poofmq-go-api
+module github.com/tortolero-ruben/poofmq/services/go-api
 
 go 1.24.0
+
+require github.com/google/uuid v1.6.0
+
+replace github.com/tortolero-ruben/poofmq/gen/go/poofmq => ../../gen/go/poofmq/v1
