@@ -102,12 +102,19 @@ These mappings are also defined in [`config/topology.php`](config/topology.php) 
 
 The portal is set up for Railway’s “majestic monolith” pattern: one repo, multiple services (web, worker, cron).
 
-**Prerequisites:** Railway project with **PostgreSQL** and **Redis** (add from the Railway dashboard).
+**Prerequisites:** Railway project with **PostgreSQL** and **Redis**. You can add them manually in the dashboard or automate with the CLI (see below).
+
+**Config as code (versioned):** The Laravel app’s build and deploy are defined in the repo so they can be redeployed consistently:
+
+- **[railpack.json](railpack.json)** — Railpack build/deploy: PHP 8.4, Laravel document root `public/`, skip Railpack’s default migrations (we run them in pre-deploy).
+- **[railway.json](railway.json)** — Railway deploy: Railpack builder, build command `npm run build`, pre-deploy (migrate), healthcheck `/up`, restart policy.
+- **[railway/*.sh](railway/)** — Scripts used by pre-deploy and by the worker/cron services.
+
+You do not need to set a custom build or pre-deploy command in the dashboard; the config in code overrides it.
 
 **1. App service (HTTP)**  
 - Source: this repo (root).  
-- **Build:** set *Custom Build Command* to `npm run build`.  
-- **Deploy:** set *Pre-Deploy Command* to `chmod +x ./railway/init-app.sh && ./railway/init-app.sh`.  
+- **Build / Deploy:** Handled by [railway.json](railway.json) and [railpack.json](railpack.json) (no need to set custom build or pre-deploy in the dashboard).  
 - **Variables:** all portal env vars (see below). Use `DB_URL` = `${{Postgres.DATABASE_URL}}` and Redis vars from the Redis plugin (`REDIS_URL` or `REDIS_HOST`/`REDIS_PORT`/`REDIS_PASSWORD`).  
 - Generate a **public domain** in Networking.
 
@@ -136,6 +143,15 @@ The portal is set up for Railway’s “majestic monolith” pattern: one repo, 
 
 Scripts used: [`railway/init-app.sh`](railway/init-app.sh) (migrate), [`railway/run-worker.sh`](railway/run-worker.sh) (queue worker), [`railway/run-cron.sh`](railway/run-cron.sh) (scheduler). See [Railway’s Laravel guide](https://docs.railway.app/guides/laravel) for more detail.
 
+**Automate Redis (and Postgres) on Railway:** From the repo root with the project already linked (`railway link`), run:
+
+```bash
+make railway-add-redis        # add Redis only
+make railway-add-databases    # add Redis and Postgres
+```
+
+Or run the script directly: `./railway/add-redis.sh` or `./railway/add-redis.sh --postgres`. This uses the [Railway CLI](https://docs.railway.com/guides/cli) `railway add --database redis` (and `--database postgres`). After adding, set your app service variables to reference `${{Postgres.DATABASE_URL}}` and the Redis service’s `REDIS_*` (or `REDIS_URL`). Re-link to your Laravel app service before the next deploy: `railway link`.
+
 **Railway MCP:** If you use the Railway MCP in Cursor (e.g. `check-railway-status`, `list-projects`, `list-services`, `deploy`, `set-variables`, `generate-domain`), install the [Railway CLI](https://docs.railway.com/guides/cli) and run `railway login` and `railway link` in this repo so the MCP can talk to your project.
 
 ## Quickstart and SDKs
@@ -155,6 +171,8 @@ make openapi-publish       # copy gen/openapi/poofmq.swagger.json to dist/openap
 make sdk-generate          # regenerate Node/Python/Go/Java SDK stubs from OpenAPI (requires Docker)
 make proto-check-generated  # regenerate and fail if tracked artifacts drift
 BUF_VERSION=1.52.0 make proto-generate  # override default buf image version
+make railway-add-redis      # add Redis to linked Railway project (CLI)
+make railway-add-databases  # add Redis + Postgres to linked Railway project (CLI)
 ```
 
 ## Auth Token Issuance and Revocation (RUB-250)
