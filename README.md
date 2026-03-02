@@ -123,16 +123,16 @@ You do not need to set a custom build or pre-deploy command in the dashboard; th
 - Generate a **public domain** in Networking.
 
 **2. Worker service (queue)**  
-- Same repo. No custom build.  
-- **Start Command:** `chmod +x ./railway/run-worker.sh && ./railway/run-worker.sh`.  
+- Same repo. Uses [railway-worker.json](railway-worker.json) (RAILPACK, PHP 8.4; start command in config).  
 - **Variables:** same as App service (same env set).
 
 **3. Cron service (scheduler)**  
-- Same repo. No custom build.  
-- **Start Command:** `chmod +x ./railway/run-cron.sh && ./railway/run-cron.sh`.  
+- Same repo. Uses [railway-cron.json](railway-cron.json) (RAILPACK, PHP 8.4; start command in config).  
 - **Variables:** same as App service.
 
-**Adding Worker and Cron:** Create two new services from the same GitHub repo in the Railway dashboard: **Deploy** → **New Service** → **GitHub Repo** → select this repo. Name one **Worker** and the other **Cron**. In each service’s **Settings** → **Deploy**, set the **Custom Start Command** as above (Worker: `run-worker.sh`, Cron: `run-cron.sh`). Then from the repo root run `make railway-set-worker-cron-vars` (or `./railway/set-worker-cron-variables.sh`) to set DB and Redis variables on both. Ensure `APP_KEY`, `APP_ENV`, and `APP_URL` are set (e.g. at environment level or on each service).
+**Adding Worker and Cron:** Create two new services from the same GitHub repo in the Railway dashboard: **Deploy** → **New Service** → **GitHub Repo** → select this repo. Name one **Worker** and the other **Cron**. For each service, set the **Railway config file path** (in **Settings** → **Build** or **Settings** → **Deploy**, depending on UI) so it uses the correct config: **Worker** → `railway-worker.json`, **Cron** → `railway-cron.json`. That forces RAILPACK (PHP 8.4) and sets the start command in code. Then from the repo root run `make railway-set-worker-cron-vars` (or `./railway/set-worker-cron-variables.sh`) to set DB/Redis (and optional NIXPACKS fallback) variables on both. Ensure `APP_KEY`, `APP_ENV`, and `APP_URL` are set (e.g. at environment level or on each service).
+
+**If Worker or Cron build still fails** with a PHP version error: confirm the service’s **config file path** is set to `railway-worker.json` or `railway-cron.json` so it uses RAILPACK. Without that, Railway may build with Nixpacks (PHP 8.2). As a fallback you can set `NIXPACKS_PHP_VERSION=8.4` on the service and redeploy.
 
 **Required / important variables for production**
 

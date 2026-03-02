@@ -20,7 +20,10 @@ if [ ! -f "railway/init-app.sh" ]; then
 fi
 
 # Variables to set (use single quotes so ${{}} is not expanded by shell)
+# NIXPACKS_* force PHP 8.4 build (Worker/Cron often use Nixpacks; app uses Railpack).
 VARS=(
+  'NIXPACKS_PHP_VERSION=8.4'
+  'NIXPACKS_PHP_ROOT_DIR=/app/public'
   'DB_CONNECTION=pgsql'
   'DB_URL=${{Postgres.DATABASE_URL}}'
   'REDIS_URL=${{Redis.REDIS_URL}}'
