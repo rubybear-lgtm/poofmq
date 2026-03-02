@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\DonationLedgerEntry;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 
 class DonationLedgerService
@@ -25,34 +26,47 @@ class DonationLedgerService
      */
     public function recordEvent(array $attributes): array
     {
-        $existing = DonationLedgerEntry::query()
-            ->where('provider', $attributes['provider'])
-            ->where('provider_event_id', $attributes['provider_event_id'])
-            ->first();
+        try {
+            $entry = DonationLedgerEntry::query()->firstOrCreate(
+                [
+                    'provider' => $attributes['provider'],
+                    'provider_event_id' => $attributes['provider_event_id'],
+                ],
+                [
+                    'event_type' => $attributes['event_type'],
+                    'amount_cents' => $attributes['amount_cents'],
+                    'currency' => strtoupper($attributes['currency']),
+                    'happened_at' => $attributes['happened_at'],
+                    'donor_name' => $attributes['donor_name'] ?? null,
+                    'donor_email' => $attributes['donor_email'] ?? null,
+                    'metadata' => $attributes['metadata'] ?? null,
+                ],
+            );
+        } catch (QueryException $exception) {
+            if (! $this->isUniqueConstraintViolation($exception)) {
+                throw $exception;
+            }
 
-        if ($existing !== null) {
-            return [
-                'entry' => $existing,
-                'already_processed' => true,
-            ];
+            $entry = DonationLedgerEntry::query()
+                ->where('provider', $attributes['provider'])
+                ->where('provider_event_id', $attributes['provider_event_id'])
+                ->firstOrFail();
         }
-
-        $entry = DonationLedgerEntry::query()->create([
-            'provider' => $attributes['provider'],
-            'provider_event_id' => $attributes['provider_event_id'],
-            'event_type' => $attributes['event_type'],
-            'amount_cents' => $attributes['amount_cents'],
-            'currency' => strtoupper($attributes['currency']),
-            'happened_at' => $attributes['happened_at'],
-            'donor_name' => $attributes['donor_name'] ?? null,
-            'donor_email' => $attributes['donor_email'] ?? null,
-            'metadata' => $attributes['metadata'] ?? null,
-        ]);
 
         return [
             'entry' => $entry,
-            'already_processed' => false,
+            'already_processed' => ! $entry->wasRecentlyCreated,
         ];
+    }
+
+    /**
+     * Determine whether the given query exception is a unique key violation.
+     */
+    protected function isUniqueConstraintViolation(QueryException $exception): bool
+    {
+        $sqlState = $exception->errorInfo[0] ?? null;
+
+        return in_array($sqlState, ['23000', '23505'], true);
     }
 
     /**

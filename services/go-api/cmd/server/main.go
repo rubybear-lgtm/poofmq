@@ -119,7 +119,11 @@ func main() {
 	// Metrics endpoint
 	httpMux.HandleFunc("/metrics", func(writer http.ResponseWriter, request *http.Request) {
 		snapshot := metrics.SnapshotMetrics()
-		redisMemoryBytes := redisUsedMemoryBytes(context.Background(), rdb)
+
+		ctx, cancel := context.WithTimeout(request.Context(), 2*time.Second)
+		defer cancel()
+
+		redisMemoryBytes := redisUsedMemoryBytes(ctx, rdb)
 
 		payload := map[string]any{
 			"push_total":          snapshot.PushTotal,

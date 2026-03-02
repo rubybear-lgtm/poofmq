@@ -31,7 +31,7 @@ func NewQueueServiceServer(queueClient *queue.Client) *QueueServiceServer {
 
 // Push handles the PushMessage gRPC call to enqueue a message.
 func (s *QueueServiceServer) Push(ctx context.Context, req *poofmqv1.PushMessageRequest) (response *poofmqv1.PushMessageResponse, err error) {
-	startedAt := time.Now().UTC()
+	startedAt := time.Now()
 	defer func() {
 		metrics.RecordPush(time.Since(startedAt), err != nil)
 	}()
@@ -81,7 +81,7 @@ func (s *QueueServiceServer) Push(ctx context.Context, req *poofmqv1.PushMessage
 // This implements at-most-once delivery semantics - each message is delivered to
 // at most one consumer, but messages can be lost if a consumer fails after popping.
 func (s *QueueServiceServer) Pop(ctx context.Context, req *poofmqv1.PopMessageRequest) (response *poofmqv1.PopMessageResponse, err error) {
-	startedAt := time.Now().UTC()
+	startedAt := time.Now()
 	defer func() {
 		metrics.RecordPop(time.Since(startedAt), err != nil)
 	}()

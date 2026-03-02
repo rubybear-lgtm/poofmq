@@ -60,7 +60,7 @@ type Alert = {
 };
 
 type ObservabilityMetrics = {
-    throughput_per_minute: number;
+    throughput_total: number;
     error_rate_percent: number;
     avg_push_latency_ms: number;
     avg_pop_latency_ms: number;
@@ -215,9 +215,8 @@ export default function Dashboard({
                         </CardHeader>
                         <CardContent className="space-y-1 text-sm">
                             <p>
-                                Throughput:{' '}
-                                {observability.metrics.throughput_per_minute}{' '}
-                                ops/min
+                                Throughput Total:{' '}
+                                {observability.metrics.throughput_total} ops
                             </p>
                             <p>
                                 Error rate:{' '}
