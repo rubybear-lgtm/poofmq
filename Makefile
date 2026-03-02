@@ -1,5 +1,6 @@
 .PHONY: infra-up infra-down bootstrap portal-dev full-stack \
 	ci-lint-laravel ci-lint-frontend ci-lint-go ci-test-laravel ci-test-go \
+	ci-test-go-unit ci-test-go-integration \
 	proto-generate proto-deps proto-check-generated generate-artifacts ci-check-generated \
 	setup-hooks
 
@@ -48,7 +49,14 @@ ci-test-laravel:
 	php artisan test --compact
 
 ci-test-go:
-	cd services/go-api && go test ./...
+	$(MAKE) ci-test-go-unit
+	$(MAKE) ci-test-go-integration
+
+ci-test-go-unit:
+	cd services/go-api && go test ./... -skip TestClientIntegration
+
+ci-test-go-integration:
+	cd services/go-api && go test ./internal/queue -run TestClientIntegration -count=1
 
 proto-generate:
 	$(BUF_DOCKER_RUN) generate
