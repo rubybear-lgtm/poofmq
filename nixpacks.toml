@@ -1,0 +1,5 @@
+# Pin PHP 8.4 so composer.lock (generated on 8.4) installs on Railway.
+# Laravel document root must be public/ for Nginx.
+[variables]
+NIXPACKS_PHP_VERSION = "8.4"
+NIXPACKS_PHP_ROOT_DIR = "/app/public"
