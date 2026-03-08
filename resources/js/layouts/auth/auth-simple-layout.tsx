@@ -8,8 +8,9 @@ export default function AuthSimpleLayout({
     description,
 }: AuthLayoutProps) {
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-black p-6 md:p-10">
-            <div className="w-full max-w-sm">
+        <div className="relative flex min-h-svh flex-col items-center justify-center bg-background px-6 py-10 md:px-10">
+            <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,oklch(0.96_0.02_75),transparent_35%),linear-gradient(to_bottom,transparent,oklch(0.99_0_0))] dark:bg-[radial-gradient(circle_at_top,oklch(0.2_0.02_75),transparent_30%),linear-gradient(to_bottom,transparent,oklch(0.1_0_0))]" />
+            <div className="w-full max-w-md">
                 <div className="flex flex-col gap-8">
                     <div className="flex flex-col items-center gap-4">
                         <Link
@@ -17,25 +18,25 @@ export default function AuthSimpleLayout({
                             className="flex flex-col items-center gap-2 font-medium"
                         >
                             <div className="flex items-center gap-3">
-                                <span className="material-symbols-outlined text-4xl text-[#FFBF00]">
+                                <span className="material-symbols-outlined text-4xl text-primary">
                                     cyclone
                                 </span>
-                                <span className="text-2xl font-black italic">
-                                    POOF_MQ
+                                <span className="text-2xl font-semibold tracking-tight text-foreground">
+                                    PoofMQ
                                 </span>
                             </div>
                         </Link>
 
                         <div className="space-y-2 text-center">
-                            <h1 className="text-xl font-bold tracking-wide uppercase">
+                            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
                                 {title}
                             </h1>
-                            <p className="text-center text-sm text-white/60">
+                            <p className="text-center text-sm text-muted-foreground">
                                 {description}
                             </p>
                         </div>
                     </div>
-                    <div className="border-4 border-white bg-[#0a0a0a] p-6">
+                    <div className="rounded-2xl border border-border bg-card p-6 shadow-soft">
                         {children}
                     </div>
                 </div>

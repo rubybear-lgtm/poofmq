@@ -4,12 +4,12 @@ Multi-language client SDKs for the poofMQ API. Each subdirectory contains the SD
 
 ## Layout
 
-| Directory | Language | Status |
-|-----------|----------|--------|
-| `node/`   | Node.js / TypeScript | MVP (RUB-263) |
-| `python/` | Python 3             | MVP (RUB-266) |
-| `go/`     | Go                  | Generated stubs |
-| `java/`   | Java                | Generated stubs |
+| Directory | Language             | Status          |
+| --------- | -------------------- | --------------- |
+| `node/`   | Node.js / TypeScript | MVP (RUB-263)   |
+| `python/` | Python 3             | MVP (RUB-266)   |
+| `go/`     | Go                   | Generated stubs |
+| `java/`   | Java                 | Generated stubs |
 
 ## Regenerating SDKs
 
@@ -24,5 +24,5 @@ See [docs/sdk-versioning.md](../docs/sdk-versioning.md) for versioning and relea
 
 ## Installing SDKs
 
-- **Node:** `cd sdks/node && npm install && npm run build`. Requires `make sdk-generate` first so `generated/` exists.
-- **Python:** From repo root run `make sdk-generate`, then `cd sdks/python && pip install ./generated && pip install -e .`. Run unit tests with `pytest test/`.
+- **Node:** `npm install @poofmq/node`
+- **Python:** `pip install poofmq`

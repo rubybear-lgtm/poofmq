@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import {
     Card,
@@ -106,6 +107,33 @@ function formatBytes(bytes: number): string {
     return `${megabytes.toFixed(2)} MB`;
 }
 
+function MetricRow({
+    label,
+    value,
+    emphasize = false,
+}: {
+    label: string;
+    value: ReactNode;
+    emphasize?: boolean;
+}) {
+    return (
+        <div className="flex items-baseline justify-between gap-3 border-b border-border/60 py-2 first:pt-0 last:border-b-0 last:pb-0">
+            <span className="text-xs font-medium tracking-wide text-muted-foreground">
+                {label}
+            </span>
+            <span
+                className={
+                    emphasize
+                        ? 'font-mono text-sm font-medium text-primary'
+                        : 'font-mono text-sm text-foreground'
+                }
+            >
+                {value}
+            </span>
+        </div>
+    );
+}
+
 export default function Dashboard({
     funding,
     billing,
@@ -122,76 +150,69 @@ export default function Dashboard({
                 <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>FUNDING</CardTitle>
+                            <CardTitle>Funding</CardTitle>
                             <CardDescription>
                                 Donation ledger aggregate
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-2 font-mono text-sm">
-                            <p>
-                                <span className="text-white/50">NET:</span>{' '}
-                                <span className="text-[#FFBF00]">
-                                    {formatCents(
-                                        funding.summary.net_funding_cents,
-                                    )}
-                                </span>
-                            </p>
-                            <p>
-                                <span className="text-white/50">GROSS:</span>{' '}
-                                {formatCents(
+                        <CardContent>
+                            <MetricRow
+                                label="Net"
+                                value={formatCents(
+                                    funding.summary.net_funding_cents,
+                                )}
+                                emphasize
+                            />
+                            <MetricRow
+                                label="Gross"
+                                value={formatCents(
                                     funding.summary.gross_donations_cents,
                                 )}
-                            </p>
-                            <p>
-                                <span className="text-white/50">REFUNDS:</span>{' '}
-                                {formatCents(funding.summary.refunds_cents)}
-                            </p>
-                            <p>
-                                <span className="text-white/50">EVENTS:</span>{' '}
-                                {funding.summary.event_count}
-                            </p>
+                            />
+                            <MetricRow
+                                label="Refunds"
+                                value={formatCents(
+                                    funding.summary.refunds_cents,
+                                )}
+                            />
+                            <MetricRow
+                                label="Events"
+                                value={funding.summary.event_count}
+                            />
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>RAILWAY_BILLING</CardTitle>
+                            <CardTitle>Railway billing</CardTitle>
                             <CardDescription>
                                 Latest balance and runway
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-2 font-mono text-sm">
+                        <CardContent>
                             {billingLatest === null ? (
-                                <p className="text-white/50">
+                                <p className="text-sm text-muted-foreground">
                                     No billing snapshots yet.
                                 </p>
                             ) : (
                                 <>
-                                    <p>
-                                        <span className="text-white/50">
-                                            BALANCE:
-                                        </span>{' '}
-                                        <span className="text-[#FFBF00]">
-                                            {formatCents(
-                                                billingLatest.balance_cents,
-                                            )}
-                                        </span>
-                                    </p>
-                                    <p>
-                                        <span className="text-white/50">
-                                            SPEND_MTD:
-                                        </span>{' '}
-                                        {formatCents(
+                                    <MetricRow
+                                        label="Balance"
+                                        value={formatCents(
+                                            billingLatest.balance_cents,
+                                        )}
+                                        emphasize
+                                    />
+                                    <MetricRow
+                                        label="Spend MTD"
+                                        value={formatCents(
                                             billingLatest.month_to_date_spend_cents,
                                         )}
-                                    </p>
-                                    <p>
-                                        <span className="text-white/50">
-                                            RUNWAY:
-                                        </span>{' '}
-                                        {billingLatest.runway_months.toFixed(2)}{' '}
-                                        months
-                                    </p>
+                                    />
+                                    <MetricRow
+                                        label="Runway"
+                                        value={`${billingLatest.runway_months.toFixed(2)} months`}
+                                    />
                                 </>
                             )}
                         </CardContent>
@@ -199,66 +220,55 @@ export default function Dashboard({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>CAPACITY_LIMIT</CardTitle>
+                            <CardTitle>Capacity limit</CardTitle>
                             <CardDescription>
                                 Active rate limit controls
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-2 font-mono text-sm">
-                            <p>
-                                <span className="text-white/50">
-                                    EFFECTIVE:
-                                </span>{' '}
-                                <span className="text-[#FFBF00]">
-                                    {capacity.effective_limit_per_minute}
-                                </span>{' '}
-                                req/min
-                            </p>
-                            <p>
-                                <span className="text-white/50">BASELINE:</span>{' '}
-                                {capacity.base_limit_per_minute} req/min
-                            </p>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-0">
+                                <MetricRow
+                                    label="Effective"
+                                    value={`${capacity.effective_limit_per_minute} req/min`}
+                                    emphasize
+                                />
+                                <MetricRow
+                                    label="Baseline"
+                                    value={`${capacity.base_limit_per_minute} req/min`}
+                                />
+                            </div>
                             {capacity.is_boost_active ? (
                                 <Badge variant="default">
-                                    BOOST x{capacity.boost_multiplier}
+                                    Boost x{capacity.boost_multiplier}
                                 </Badge>
                             ) : (
-                                <Badge variant="outline">NO_ACTIVE_BOOST</Badge>
+                                <Badge variant="outline">No active boost</Badge>
                             )}
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>OBSERVABILITY</CardTitle>
+                            <CardTitle>Observability</CardTitle>
                             <CardDescription>
                                 Runtime SLO indicators
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-2 font-mono text-sm">
-                            <p>
-                                <span className="text-white/50">
-                                    THROUGHPUT:
-                                </span>{' '}
-                                {observability.metrics.throughput_total} ops
-                            </p>
-                            <p>
-                                <span className="text-white/50">
-                                    ERROR_RATE:
-                                </span>{' '}
-                                {observability.metrics.error_rate_percent.toFixed(
-                                    2,
-                                )}
-                                %
-                            </p>
-                            <p>
-                                <span className="text-white/50">
-                                    REDIS_MEM:
-                                </span>{' '}
-                                {formatBytes(
+                        <CardContent>
+                            <MetricRow
+                                label="Throughput"
+                                value={`${observability.metrics.throughput_total} ops`}
+                            />
+                            <MetricRow
+                                label="Error rate"
+                                value={`${observability.metrics.error_rate_percent.toFixed(2)}%`}
+                            />
+                            <MetricRow
+                                label="Redis memory"
+                                value={formatBytes(
                                     observability.metrics.redis_memory_bytes,
                                 )}
-                            </p>
+                            />
                         </CardContent>
                     </Card>
                 </div>
@@ -266,26 +276,26 @@ export default function Dashboard({
                 <div className="grid gap-6 xl:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle>FUNDING_HISTORY</CardTitle>
+                            <CardTitle>Funding history</CardTitle>
                             <CardDescription>
                                 Most recent donation ledger entries
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {funding.history.length === 0 ? (
-                                <p className="text-sm text-white/50">
+                                <p className="text-sm text-muted-foreground">
                                     No donation ledger entries yet.
                                 </p>
                             ) : (
                                 funding.history.map((entry) => (
                                     <div
                                         key={entry.id}
-                                        className="border-2 border-white/20 px-4 py-3 font-mono text-sm"
+                                        className="rounded-xl border border-border bg-muted/30 px-4 py-3"
                                     >
-                                        <p className="font-bold uppercase">
+                                        <p className="font-medium text-foreground">
                                             {entry.event_type}
                                         </p>
-                                        <p className="text-white/60">
+                                        <p className="mt-1 text-sm text-muted-foreground">
                                             {formatCents(entry.amount_cents)}{' '}
                                             via {entry.provider}
                                         </p>
@@ -297,21 +307,21 @@ export default function Dashboard({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>ACTIVE_ALERTS</CardTitle>
+                            <CardTitle>Active alerts</CardTitle>
                             <CardDescription>
                                 Threshold-driven operational alerts
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {observability.alerts.length === 0 ? (
-                                <p className="text-sm text-white/50">
+                                <p className="text-sm text-muted-foreground">
                                     No active alerts.
                                 </p>
                             ) : (
                                 observability.alerts.map((alert) => (
                                     <div
                                         key={alert.key}
-                                        className="border-2 border-white/20 px-4 py-3 font-mono text-sm"
+                                        className="rounded-xl border border-border bg-muted/30 px-4 py-3"
                                     >
                                         <div className="mb-2 flex items-center gap-2">
                                             <Badge
@@ -322,14 +332,16 @@ export default function Dashboard({
                                                         : 'secondary'
                                                 }
                                             >
-                                                {alert.severity.toUpperCase()}
+                                                {alert.severity}
                                             </Badge>
-                                            <span className="font-bold uppercase">
+                                            <span className="font-medium text-foreground">
                                                 {alert.key}
                                             </span>
                                         </div>
-                                        <p>{alert.message}</p>
-                                        <p className="text-xs text-white/50">
+                                        <p className="text-sm text-foreground">
+                                            {alert.message}
+                                        </p>
+                                        <p className="mt-1 text-xs text-muted-foreground">
                                             {alert.runbook}
                                         </p>
                                     </div>

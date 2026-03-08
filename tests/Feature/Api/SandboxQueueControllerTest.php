@@ -11,7 +11,7 @@ beforeEach(function () {
     config()->set('services.turnstile.verify_url', 'https://challenges.cloudflare.com/turnstile/v0/siteverify');
 });
 
-it('creates a sandbox queue with valid turnstile token', function () {
+it('creates an instant-start queue with valid turnstile token', function () {
     // Mock the TurnstileService to return true for verification
     $mockService = $this->mock(TurnstileService::class);
     $mockService->shouldReceive('verify')
@@ -19,7 +19,7 @@ it('creates a sandbox queue with valid turnstile token', function () {
         ->with('valid-turnstile-token', \Mockery::any())
         ->andReturnTrue();
 
-    $response = postJson(route('api.sandbox.queues.store'), [
+    $response = postJson(route('api.instant.queues.store'), [
         'turnstile_token' => 'valid-turnstile-token',
     ]);
 
@@ -47,7 +47,7 @@ it('returns 422 when turnstile verification fails', function () {
         ->with('invalid-turnstile-token', \Mockery::any())
         ->andReturnFalse();
 
-    $response = postJson(route('api.sandbox.queues.store'), [
+    $response = postJson(route('api.instant.queues.store'), [
         'turnstile_token' => 'invalid-turnstile-token',
     ]);
 
@@ -58,14 +58,14 @@ it('returns 422 when turnstile verification fails', function () {
 });
 
 it('requires a turnstile token', function () {
-    $response = postJson(route('api.sandbox.queues.store'), []);
+    $response = postJson(route('api.instant.queues.store'), []);
 
     $response->assertUnprocessable()
         ->assertJsonValidationErrors(['turnstile_token']);
 });
 
 it('validates turnstile token is a string', function () {
-    $response = postJson(route('api.sandbox.queues.store'), [
+    $response = postJson(route('api.instant.queues.store'), [
         'turnstile_token' => ['not', 'a', 'string'],
     ]);
 
@@ -80,7 +80,7 @@ it('applies rate limiting', function () {
 
     // Make 61 requests (the limit is 60 per minute)
     for ($i = 0; $i < 61; $i++) {
-        $response = postJson(route('api.sandbox.queues.store'), [
+        $response = postJson(route('api.instant.queues.store'), [
             'turnstile_token' => 'test-token',
         ]);
     }

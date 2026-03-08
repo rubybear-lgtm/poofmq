@@ -1,7 +1,9 @@
 <?php
 
+use App\Jobs\SyncApiKeyToRedis;
 use App\Models\Project;
 use App\Models\User;
+use Illuminate\Support\Facades\Bus;
 
 uses(Illuminate\Foundation\Testing\RefreshDatabase::class);
 
@@ -20,6 +22,22 @@ test('users can view their projects index', function () {
 
     $response->assertOk();
     expect($response->inertiaProps('projects'))->toHaveCount(3);
+});
+
+test('projects index includes api key counts', function () {
+    $user = User::factory()->create();
+    $project = Project::factory()->create(['user_id' => $user->id]);
+    $project->apiKeys()->create([
+        'user_id' => $user->id,
+        'name' => 'Worker Key',
+        'key_prefix' => 'worker01',
+        'key_hash' => hash('sha256', 'worker-key'),
+    ]);
+
+    $response = $this->actingAs($user)->get(route('projects.index'));
+
+    $response->assertOk();
+    expect($response->inertiaProps('projects.0.api_keys_count'))->toBe(1);
 });
 
 test('users cannot view other users projects in list', function () {
@@ -58,11 +76,12 @@ test('users can create a project', function () {
 
     $response->assertCreated();
     $response->assertJsonStructure([
-        'project' => ['id', 'name', 'description', 'created_at', 'updated_at'],
+        'project' => ['id', 'name', 'description', 'api_keys_count', 'created_at', 'updated_at'],
         'message',
     ]);
     $response->assertJsonPath('project.name', 'Test Project');
     $response->assertJsonPath('project.description', 'A test project description');
+    $response->assertJsonPath('project.api_keys_count', 0);
 
     $this->assertDatabaseHas('projects', [
         'user_id' => $user->id,
@@ -81,12 +100,69 @@ test('users can create a project without description', function () {
     $response->assertCreated();
     $response->assertJsonPath('project.name', 'Minimal Project');
     $response->assertJsonPath('project.description', null);
+    $response->assertJsonPath('project.api_keys_count', 0);
 
     $this->assertDatabaseHas('projects', [
         'user_id' => $user->id,
         'name' => 'Minimal Project',
         'description' => null,
     ]);
+});
+
+test('users can generate an api key for their project', function () {
+    Bus::fake();
+
+    $user = User::factory()->create();
+    $project = Project::factory()->create([
+        'user_id' => $user->id,
+        'name' => 'Production API',
+    ]);
+
+    $response = $this->actingAs($user)->postJson(route('projects.api-keys.store', $project));
+
+    $response->assertCreated();
+    $response->assertJsonPath('api_key.project_id', $project->id);
+    $response->assertJsonPath('api_key.project_name', 'Production API');
+    $response->assertJsonPath('api_key.name', 'Production API API Key');
+
+    expect($response->json('plain_text_key'))->toStartWith('poofmq_');
+
+    $this->assertDatabaseHas('api_keys', [
+        'user_id' => $user->id,
+        'project_id' => $project->id,
+        'name' => 'Production API API Key',
+    ]);
+
+    Bus::assertDispatched(SyncApiKeyToRedis::class);
+});
+
+test('users cannot generate an api key for another users project', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $project = Project::factory()->create(['user_id' => $otherUser->id]);
+
+    $response = $this->actingAs($user)->postJson(route('projects.api-keys.store', $project));
+
+    $response->assertForbidden();
+
+    $this->assertDatabaseCount('api_keys', 0);
+});
+
+test('users cannot generate an api key for an archived project', function () {
+    Bus::fake();
+
+    $user = User::factory()->create();
+    $project = Project::factory()->archived()->create(['user_id' => $user->id]);
+
+    $response = $this->actingAs($user)->postJson(route('projects.api-keys.store', $project));
+
+    $response->assertUnprocessable();
+    $response->assertJson([
+        'message' => 'Archived projects cannot generate API keys.',
+    ]);
+
+    $this->assertDatabaseCount('api_keys', 0);
+    Bus::assertNotDispatched(SyncApiKeyToRedis::class);
 });
 
 test('project validation requires name', function () {
@@ -134,6 +210,7 @@ test('users can update their project', function () {
     $response->assertSuccessful();
     $response->assertJsonPath('project.name', 'Updated Project');
     $response->assertJsonPath('project.description', 'Updated description');
+    $response->assertJsonPath('project.api_keys_count', 0);
 
     $project->refresh();
     expect($project->name)->toBe('Updated Project');

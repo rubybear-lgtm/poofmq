@@ -16,7 +16,7 @@ This document records how OpenAPI SDK generation is used and that all SDK client
   - `POST /v1/queues/{queue_id}/messages` — Push
   - `POST /v1/queues/{queue_id}/messages:pop` — Pop
 
-These match the Go gRPC-Gateway routes in `gen/go/poofmq/v1/poofmq.pb.gw.go`. Laravel portal routes (e.g. `api.sandbox.queues.store`) are separate and are not in this spec.
+These match the Go gRPC-Gateway routes in `gen/go/poofmq/v1/poofmq.pb.gw.go`. Laravel portal routes (e.g. `api.instant.queues.store`) are separate and are not in this spec.
 
 ## SDK clients and API routes
 

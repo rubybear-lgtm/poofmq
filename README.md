@@ -2,6 +2,8 @@
 
 This repository contains the Laravel management portal and a baseline Go API service used by the two-brain architecture.
 
+**Using poofMQ?** To send and receive messages, start with the [Quickstart](docs/quickstart.md). The portal Developers page (when logged in) and in-app docs mirror the same guide.
+
 ## Service Boundaries
 
 | Service | Role | Data Ownership |

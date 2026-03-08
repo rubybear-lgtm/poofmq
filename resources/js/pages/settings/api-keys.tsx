@@ -1,21 +1,32 @@
-import { Head, Link } from '@inertiajs/react';
-import type { FormEvent } from 'react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import Heading from '@/components/heading';
-import InputError from '@/components/input-error';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useClipboard } from '@/hooks/use-clipboard';
 import AppLayout from '@/layouts/app-layout';
-import SettingsLayout from '@/layouts/settings/layout';
 import { jsonHeaders } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 import {
     destroy as destroyApiKey,
     index as apiKeysIndex,
-    store as storeApiKey,
 } from '@/routes/api-keys';
 import { index as projectsIndex } from '@/routes/projects';
 
@@ -37,7 +48,13 @@ type ApiKeyRecord = {
     is_valid: boolean;
 };
 
-type ValidationErrors = Record<string, string[]>;
+type Feedback = {
+    variant: 'destructive' | 'success';
+    title: string;
+    message: string;
+};
+
+type StatusFilter = 'all' | 'active' | 'revoked';
 
 type Props = {
     apiKeys: ApiKeyRecord[];
@@ -46,124 +63,125 @@ type Props = {
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'API keys',
+        title: 'API Keys',
         href: apiKeysIndex(),
     },
 ];
 
-function mapValidationErrors(
-    errors: ValidationErrors | undefined,
-): Record<string, string> {
-    if (errors === undefined) {
-        return {};
-    }
+function formatDateTime(value: string): string {
+    return new Date(value).toLocaleString();
+}
 
-    return Object.fromEntries(
-        Object.entries(errors).map(([field, messages]) => [
-            field,
-            messages[0] ?? 'Invalid value.',
-        ]),
-    );
+function keyStatusVariant(apiKey: ApiKeyRecord): 'default' | 'destructive' {
+    return apiKey.is_valid ? 'default' : 'destructive';
 }
 
 export default function ApiKeys({ apiKeys: initialApiKeys, projects }: Props) {
+    const page = usePage();
     const [apiKeys, setApiKeys] = useState<ApiKeyRecord[]>(initialApiKeys);
-    const [name, setName] = useState<string>('');
-    const [projectId, setProjectId] = useState<string>('');
-    const [expiresAt, setExpiresAt] = useState<string>('');
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [statusMessage, setStatusMessage] = useState<string | null>(null);
-    const [plainTextKey, setPlainTextKey] = useState<string | null>(null);
-    const [isCreating, setIsCreating] = useState<boolean>(false);
+    const [feedback, setFeedback] = useState<Feedback | null>(null);
+    const [searchTerm, setSearchTerm] = useState<string>('');
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
     const [revokingKeyId, setRevokingKeyId] = useState<string | null>(null);
-    const [copiedValue, copyToClipboard] = useClipboard();
-
-    const copiedKey = useMemo(
-        () => copiedValue !== null && copiedValue === plainTextKey,
-        [copiedValue, plainTextKey],
+    const [revokeCandidateId, setRevokeCandidateId] = useState<string | null>(
+        null,
     );
+    const initialProjectFilter = useMemo(() => {
+        const query = new URL(page.url, 'https://poofmq.test').searchParams;
 
-    const handleCreateApiKey = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
+        return query.get('project') ?? '';
+    }, [page.url]);
+    const [selectedProjectId, setSelectedProjectId] =
+        useState<string>(initialProjectFilter);
 
-        setStatusMessage(null);
-        setIsCreating(true);
+    const revokeCandidate = useMemo(
+        () =>
+            revokeCandidateId === null
+                ? null
+                : (apiKeys.find((apiKey) => apiKey.id === revokeCandidateId) ??
+                  null),
+        [apiKeys, revokeCandidateId],
+    );
+    const activeKeyCount = apiKeys.filter((apiKey) => apiKey.is_valid).length;
+    const scopedKeyCount = apiKeys.filter(
+        (apiKey) => apiKey.project_id !== null,
+    ).length;
+    const filteredApiKeys = useMemo(() => {
+        const normalizedSearch = searchTerm.trim().toLowerCase();
 
-        const expiresAtValue =
-            expiresAt === '' ? null : new Date(expiresAt).toISOString();
-
-        try {
-            const response = await fetch(storeApiKey.url(), {
-                method: 'POST',
-                headers: jsonHeaders(),
-                body: JSON.stringify({
-                    name,
-                    project_id: projectId || null,
-                    expires_at: expiresAtValue,
-                }),
-            });
-
-            const payload = await response.json();
-
-            if (response.status === 422) {
-                setErrors(
-                    mapValidationErrors(
-                        payload.errors as ValidationErrors | undefined,
-                    ),
-                );
-
-                return;
+        return apiKeys.filter((apiKey) => {
+            if (statusFilter === 'active' && !apiKey.is_valid) {
+                return false;
             }
 
-            if (!response.ok) {
-                setErrors({ name: 'Unable to create the API key right now.' });
-
-                return;
+            if (statusFilter === 'revoked' && apiKey.is_valid) {
+                return false;
             }
 
-            const createdApiKey = payload.api_key as ApiKeyRecord;
+            if (selectedProjectId !== '') {
+                if (
+                    selectedProjectId === '__unscoped__' &&
+                    apiKey.project_id !== null
+                ) {
+                    return false;
+                }
 
-            setApiKeys((currentApiKeys) => [
-                {
-                    ...createdApiKey,
-                    revoked_at: null,
-                    revoked_by: null,
-                    is_valid: true,
-                },
-                ...currentApiKeys,
-            ]);
-            setErrors({});
-            setName('');
-            setProjectId('');
-            setExpiresAt('');
-            setPlainTextKey(payload.plain_text_key as string);
-            setStatusMessage(payload.message as string);
-        } finally {
-            setIsCreating(false);
+                if (
+                    selectedProjectId !== '__unscoped__' &&
+                    apiKey.project_id !== selectedProjectId
+                ) {
+                    return false;
+                }
+            }
+
+            if (normalizedSearch === '') {
+                return true;
+            }
+
+            return [
+                apiKey.name,
+                apiKey.project_name ?? '',
+                apiKey.key_prefix,
+            ].some((value) => value.toLowerCase().includes(normalizedSearch));
+        });
+    }, [apiKeys, searchTerm, selectedProjectId, statusFilter]);
+    const hasFilters =
+        searchTerm !== '' || selectedProjectId !== '' || statusFilter !== 'all';
+
+    const handleRevokeApiKey = async () => {
+        if (revokeCandidate === null) {
+            return;
         }
-    };
 
-    const handleRevokeApiKey = async (apiKeyId: string) => {
-        setStatusMessage(null);
-        setRevokingKeyId(apiKeyId);
+        setFeedback(null);
+        setRevokingKeyId(revokeCandidate.id);
 
         try {
-            const response = await fetch(destroyApiKey.url(apiKeyId), {
-                method: 'DELETE',
-                headers: jsonHeaders(),
-            });
+            const response = await fetch(
+                destroyApiKey.url(revokeCandidate.id),
+                {
+                    method: 'DELETE',
+                    headers: jsonHeaders(),
+                },
+            );
 
             const payload = await response.json();
 
             if (!response.ok) {
-                setStatusMessage('Unable to revoke the API key right now.');
+                setFeedback({
+                    variant: 'destructive',
+                    title: 'Could not revoke API key',
+                    message:
+                        (payload.message as string | undefined) ??
+                        'Try again in a moment.',
+                });
 
                 return;
             }
 
             setApiKeys((currentApiKeys) =>
                 currentApiKeys.map((apiKey) =>
-                    apiKey.id === apiKeyId
+                    apiKey.id === revokeCandidate.id
                         ? {
                               ...apiKey,
                               revoked_at:
@@ -173,7 +191,12 @@ export default function ApiKeys({ apiKeys: initialApiKeys, projects }: Props) {
                         : apiKey,
                 ),
             );
-            setStatusMessage(payload.message as string);
+            setFeedback({
+                variant: 'success',
+                title: 'API key revoked',
+                message: payload.message as string,
+            });
+            setRevokeCandidateId(null);
         } finally {
             setRevokingKeyId(null);
         }
@@ -181,233 +204,371 @@ export default function ApiKeys({ apiKeys: initialApiKeys, projects }: Props) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="API keys" />
+            <Head title="API Keys" />
 
-            <h1 className="sr-only">API keys</h1>
+            <div className="space-y-6 p-4">
+                <Heading
+                    title="API Keys"
+                    description="Review, filter, and revoke credentials across projects. Generate new keys from the project that owns the workload."
+                />
 
-            <SettingsLayout>
-                <div className="space-y-6">
-                    <Heading
-                        variant="small"
-                        title="API keys"
-                        description="Generate and revoke keys used by your projects to authenticate requests."
-                    />
+                {feedback !== null && (
+                    <Alert
+                        variant={feedback.variant}
+                        aria-live="polite"
+                        aria-atomic="true"
+                    >
+                        <AlertTitle>{feedback.title}</AlertTitle>
+                        <AlertDescription>{feedback.message}</AlertDescription>
+                    </Alert>
+                )}
 
-                    {statusMessage !== null && (
-                        <p className="text-sm font-medium text-green-600">
-                            {statusMessage}
-                        </p>
-                    )}
-
-                    {plainTextKey !== null && (
-                        <section className="space-y-3 rounded-xl border border-sidebar-border/70 bg-muted/20 p-4">
-                            <Heading
-                                variant="small"
-                                title="Copy this key now"
-                                description="For security, this plain text key is shown once and cannot be retrieved later."
-                            />
-
-                            <p className="rounded-md border bg-background px-3 py-2 font-mono text-sm break-all">
-                                {plainTextKey}
-                            </p>
-
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={() => {
-                                    void copyToClipboard(plainTextKey);
-                                }}
-                            >
-                                {copiedKey ? 'Copied' : 'Copy key'}
-                            </Button>
-                        </section>
-                    )}
-
-                    <section className="space-y-4 rounded-xl border border-sidebar-border/70 p-4">
-                        <Heading
-                            variant="small"
-                            title="Create API key"
-                            description="Assign keys to projects to isolate usage and revoke access quickly."
-                        />
-
-                        <form
-                            className="space-y-4"
-                            onSubmit={handleCreateApiKey}
-                        >
-                            <div className="grid gap-2">
-                                <Label htmlFor="api_key_name">Name</Label>
-                                <Input
-                                    id="api_key_name"
-                                    value={name}
-                                    onChange={(event) =>
-                                        setName(event.target.value)
-                                    }
-                                    placeholder="Worker service key"
-                                    required
-                                />
-                                <InputError message={errors.name} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="api_key_project">Project</Label>
-                                <select
-                                    id="api_key_project"
-                                    value={projectId}
-                                    onChange={(event) =>
-                                        setProjectId(event.target.value)
-                                    }
-                                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                >
-                                    <option value="">No project</option>
-                                    {projects.map((project) => (
-                                        <option
-                                            key={project.id}
-                                            value={project.id}
-                                        >
-                                            {project.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <InputError message={errors.project_id} />
-                                {projects.length === 0 && (
-                                    <p className="text-xs text-muted-foreground">
-                                        No projects available.{' '}
-                                        <Link
-                                            className="underline"
-                                            href={projectsIndex()}
-                                        >
-                                            Create a project first.
-                                        </Link>
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="api_key_expires_at">
-                                    Expires at (optional)
-                                </Label>
-                                <Input
-                                    id="api_key_expires_at"
-                                    type="datetime-local"
-                                    value={expiresAt}
-                                    onChange={(event) =>
-                                        setExpiresAt(event.target.value)
-                                    }
-                                />
-                                <InputError message={errors.expires_at} />
-                            </div>
-
-                            <Button type="submit" disabled={isCreating}>
-                                {isCreating
-                                    ? 'Generating...'
-                                    : 'Generate API key'}
-                            </Button>
-                        </form>
-                    </section>
-
+                <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.8fr)]">
                     <section className="space-y-4">
-                        <Heading
-                            variant="small"
-                            title="Existing keys"
-                            description="Revoke keys immediately if they are no longer needed."
-                        />
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant="secondary">
+                                {apiKeys.length}{' '}
+                                {apiKeys.length === 1 ? 'key' : 'keys'}
+                            </Badge>
+                            <Badge variant="default">
+                                {activeKeyCount} active
+                            </Badge>
+                            <Badge variant="outline">
+                                {scopedKeyCount} project-scoped
+                            </Badge>
+                        </div>
+
+                        <Card className="gap-4">
+                            <CardHeader>
+                                <CardTitle>Inventory filters</CardTitle>
+                                <CardDescription>
+                                    Narrow the list by project, status, or key
+                                    name to find credentials quickly.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="grid gap-4 sm:grid-cols-2">
+                                <div className="grid gap-2">
+                                    <label
+                                        htmlFor="api_key_search"
+                                        className="text-sm font-medium"
+                                    >
+                                        Search
+                                    </label>
+                                    <Input
+                                        id="api_key_search"
+                                        value={searchTerm}
+                                        onChange={(event) =>
+                                            setSearchTerm(event.target.value)
+                                        }
+                                        placeholder="Search by key, project, or prefix"
+                                    />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <label
+                                        htmlFor="api_key_project_filter"
+                                        className="text-sm font-medium"
+                                    >
+                                        Project
+                                    </label>
+                                    <select
+                                        id="api_key_project_filter"
+                                        value={selectedProjectId}
+                                        onChange={(event) =>
+                                            setSelectedProjectId(
+                                                event.target.value,
+                                            )
+                                        }
+                                        className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                    >
+                                        <option value="">All projects</option>
+                                        <option value="__unscoped__">
+                                            Unscoped keys
+                                        </option>
+                                        {projects.map((project) => (
+                                            <option
+                                                key={project.id}
+                                                value={project.id}
+                                            >
+                                                {project.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2 sm:col-span-2">
+                                    {(
+                                        [
+                                            ['all', 'All'],
+                                            ['active', 'Active'],
+                                            ['revoked', 'Revoked'],
+                                        ] as const
+                                    ).map(([value, label]) => (
+                                        <Button
+                                            key={value}
+                                            type="button"
+                                            variant={
+                                                statusFilter === value
+                                                    ? 'default'
+                                                    : 'secondary'
+                                            }
+                                            onClick={() =>
+                                                setStatusFilter(value)
+                                            }
+                                        >
+                                            {label}
+                                        </Button>
+                                    ))}
+
+                                    {hasFilters && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            onClick={() => {
+                                                setSearchTerm('');
+                                                setSelectedProjectId('');
+                                                setStatusFilter('all');
+                                            }}
+                                        >
+                                            Reset filters
+                                        </Button>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
 
                         {apiKeys.length === 0 && (
-                            <div className="rounded-xl border border-dashed border-sidebar-border/70 p-6 text-sm text-muted-foreground">
-                                No API keys yet.
-                            </div>
+                            <Card className="border-dashed">
+                                <CardContent className="p-0 text-sm text-muted-foreground">
+                                    No API keys yet. Generate project-scoped
+                                    keys directly from{' '}
+                                    <Link
+                                        href={projectsIndex()}
+                                        className="underline"
+                                    >
+                                        Projects
+                                    </Link>
+                                    .
+                                </CardContent>
+                            </Card>
                         )}
 
-                        {apiKeys.map((apiKey) => (
-                            <article
-                                key={apiKey.id}
-                                className="space-y-3 rounded-xl border border-sidebar-border/70 p-4"
-                            >
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <h3 className="font-medium">
-                                        {apiKey.name}
-                                    </h3>
-                                    <Badge
-                                        variant={
-                                            apiKey.is_valid
-                                                ? 'default'
-                                                : 'destructive'
-                                        }
-                                    >
-                                        {apiKey.is_valid ? 'Active' : 'Revoked'}
-                                    </Badge>
-                                    {apiKey.project_name !== null && (
-                                        <Badge variant="outline">
-                                            {apiKey.project_name}
-                                        </Badge>
+                        {apiKeys.length > 0 && filteredApiKeys.length === 0 && (
+                            <Card className="border-dashed">
+                                <CardContent className="p-0 text-sm text-muted-foreground">
+                                    No keys match the current filters.
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        <div className="grid gap-4">
+                            {filteredApiKeys.map((apiKey) => (
+                                <Card key={apiKey.id} className="gap-4">
+                                    <CardHeader className="gap-3 pb-0">
+                                        <div className="flex flex-wrap items-start justify-between gap-3">
+                                            <div className="space-y-1">
+                                                <CardTitle>
+                                                    {apiKey.name}
+                                                </CardTitle>
+                                                <CardDescription>
+                                                    {apiKey.project_name !==
+                                                    null
+                                                        ? `Scoped to ${apiKey.project_name}`
+                                                        : 'Unscoped key available across projects.'}
+                                                </CardDescription>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                <Badge
+                                                    variant={keyStatusVariant(
+                                                        apiKey,
+                                                    )}
+                                                >
+                                                    {apiKey.is_valid
+                                                        ? 'Active'
+                                                        : 'Revoked'}
+                                                </Badge>
+                                                {apiKey.project_name !==
+                                                    null && (
+                                                    <Badge variant="outline">
+                                                        {apiKey.project_name}
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+
+                                    <CardContent className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
+                                        <div className="rounded-xl border border-border/70 bg-muted/20 p-3">
+                                            <p className="font-medium text-foreground">
+                                                Key prefix
+                                            </p>
+                                            <p className="mt-1 font-mono">
+                                                {apiKey.key_prefix}
+                                            </p>
+                                        </div>
+                                        <div className="rounded-xl border border-border/70 bg-muted/20 p-3">
+                                            <p className="font-medium text-foreground">
+                                                Created
+                                            </p>
+                                            <p className="mt-1">
+                                                {formatDateTime(
+                                                    apiKey.created_at,
+                                                )}
+                                            </p>
+                                        </div>
+                                        {apiKey.expires_at !== null && (
+                                            <div className="rounded-xl border border-border/70 bg-muted/20 p-3">
+                                                <p className="font-medium text-foreground">
+                                                    Expires
+                                                </p>
+                                                <p className="mt-1">
+                                                    {formatDateTime(
+                                                        apiKey.expires_at,
+                                                    )}
+                                                </p>
+                                            </div>
+                                        )}
+                                        {apiKey.revoked_at !== null && (
+                                            <div className="rounded-xl border border-border/70 bg-muted/20 p-3">
+                                                <p className="font-medium text-foreground">
+                                                    Revoked
+                                                </p>
+                                                <p className="mt-1">
+                                                    {formatDateTime(
+                                                        apiKey.revoked_at,
+                                                    )}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </CardContent>
+
+                                    <CardFooter className="justify-end">
+                                        <div className="flex flex-wrap gap-2">
+                                            {apiKey.project_id !== null && (
+                                                <Button
+                                                    asChild
+                                                    type="button"
+                                                    variant="secondary"
+                                                >
+                                                    <Link
+                                                        href={projectsIndex()}
+                                                    >
+                                                        Open project
+                                                    </Link>
+                                                </Button>
+                                            )}
+                                            <Button
+                                                type="button"
+                                                variant="destructive"
+                                                disabled={!apiKey.is_valid}
+                                                onClick={() =>
+                                                    setRevokeCandidateId(
+                                                        apiKey.id,
+                                                    )
+                                                }
+                                            >
+                                                Revoke key
+                                            </Button>
+                                        </div>
+                                    </CardFooter>
+                                </Card>
+                            ))}
+                        </div>
+                    </section>
+
+                    <section>
+                        <Card className="sticky top-4 gap-4">
+                            <CardHeader>
+                                <CardTitle>Generate from Projects</CardTitle>
+                                <CardDescription>
+                                    Creation now lives in project context so
+                                    ownership, access scope, and cleanup stay
+                                    aligned.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4 text-sm text-muted-foreground">
+                                <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
+                                    Use the project page to generate keys, copy
+                                    them once, and keep credentials scoped to
+                                    the workload that owns them.
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                    <Button asChild type="button">
+                                        <Link href={projectsIndex()}>
+                                            Open Projects
+                                        </Link>
+                                    </Button>
+                                    {projects[0] !== undefined && (
+                                        <Button
+                                            asChild
+                                            type="button"
+                                            variant="secondary"
+                                        >
+                                            <Link
+                                                href={apiKeysIndex({
+                                                    query: {
+                                                        project: projects[0].id,
+                                                    },
+                                                })}
+                                            >
+                                                Filter to {projects[0].name}
+                                            </Link>
+                                        </Button>
                                     )}
                                 </div>
 
-                                <dl className="grid gap-2 text-sm text-muted-foreground">
-                                    <div>
-                                        <dt className="font-medium text-foreground">
-                                            Prefix
-                                        </dt>
-                                        <dd className="font-mono">
-                                            {apiKey.key_prefix}
-                                        </dd>
-                                    </div>
-                                    <div>
-                                        <dt className="font-medium text-foreground">
-                                            Created
-                                        </dt>
-                                        <dd>
-                                            {new Date(
-                                                apiKey.created_at,
-                                            ).toLocaleString()}
-                                        </dd>
-                                    </div>
-                                    {apiKey.expires_at !== null && (
-                                        <div>
-                                            <dt className="font-medium text-foreground">
-                                                Expires
-                                            </dt>
-                                            <dd>
-                                                {new Date(
-                                                    apiKey.expires_at,
-                                                ).toLocaleString()}
-                                            </dd>
-                                        </div>
-                                    )}
-                                    {apiKey.revoked_at !== null && (
-                                        <div>
-                                            <dt className="font-medium text-foreground">
-                                                Revoked
-                                            </dt>
-                                            <dd>
-                                                {new Date(
-                                                    apiKey.revoked_at,
-                                                ).toLocaleString()}
-                                            </dd>
-                                        </div>
-                                    )}
-                                </dl>
-
-                                <Button
-                                    type="button"
-                                    variant="destructive"
-                                    disabled={
-                                        !apiKey.is_valid ||
-                                        revokingKeyId === apiKey.id
-                                    }
-                                    onClick={() =>
-                                        handleRevokeApiKey(apiKey.id)
-                                    }
-                                >
-                                    {revokingKeyId === apiKey.id
-                                        ? 'Revoking...'
-                                        : 'Revoke key'}
-                                </Button>
-                            </article>
-                        ))}
+                                <p>
+                                    Unscoped keys are still supported
+                                    technically, but they are no longer the
+                                    recommended UX path.
+                                </p>
+                            </CardContent>
+                        </Card>
                     </section>
                 </div>
-            </SettingsLayout>
+            </div>
+
+            <Dialog
+                open={revokeCandidate !== null}
+                onOpenChange={(open) => {
+                    if (!open && revokingKeyId === null) {
+                        setRevokeCandidateId(null);
+                    }
+                }}
+            >
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Revoke API key</DialogTitle>
+                        <DialogDescription>
+                            {revokeCandidate === null
+                                ? 'Revoke this key.'
+                                : `Revoke ${revokeCandidate.name}? Requests using this key will stop working immediately.`}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            disabled={revokingKeyId !== null}
+                            onClick={() => setRevokeCandidateId(null)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            disabled={revokingKeyId !== null}
+                            onClick={() => void handleRevokeApiKey()}
+                        >
+                            {revokingKeyId !== null
+                                ? 'Revoking...'
+                                : 'Confirm revoke'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

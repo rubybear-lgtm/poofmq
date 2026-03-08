@@ -1,3 +1,117 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+PoofMQ is a free message queue service with a "two-brain" architecture:
+
+| Service | Role | Tech |
+|---------|------|------|
+| Laravel Portal | Management UI, auth, settings, operator workflows | PHP 8.4, Laravel 12, Inertia.js + React 19 |
+| Go API | Queue ingress/dequeue APIs, TTL operations | Go, Redis-backed |
+| Redis | Ephemeral queue state | - |
+| Postgres | Durable relational data | - |
+
+Service boundaries and deployment mappings are defined in `config/topology.php`.
+
+## Common Commands
+
+```bash
+# Initial setup
+make bootstrap              # install deps + start infra + migrate
+
+# Development
+composer run dev            # Laravel server + queue + logs + Vite (concurrently)
+make full-stack             # start all containers then run portal dev stack
+make infra-up               # start redis + postgres
+make infra-down             # stop stack
+
+# Testing
+php artisan test --compact                           # all tests
+php artisan test --compact --filter=testName         # specific test
+php artisan test --compact path/to/TestFile.php      # specific file
+cd services/go-api && go test ./...                  # Go unit tests
+
+# Code Quality
+vendor/bin/pint --dirty --format agent               # format PHP
+npm run lint:check && npm run format:check           # frontend lint/format check
+npm run types:check                                  # TypeScript check
+
+# Artifact Generation
+make proto-generate         # regenerate gRPC, gateway, and OpenAPI artifacts
+make generate-artifacts     # regenerate all artifacts and publish to dist/
+make sdk-generate          # regenerate SDK stubs from OpenAPI
+```
+
+## Architecture
+
+### Backend (Laravel Portal)
+- **Controllers**: `app/Http/Controllers/` - split between Web and Api namespaces
+- **Services**: `app/Services/` - business logic layer (e.g., `GoApiClient`, `TurnstileService`)
+- **Jobs**: `app/Jobs/` - queued operations (e.g., `ReconcileApiKeysToRedis`)
+- **Policies**: `app/Policies/` - authorization logic
+- **Routes**: `routes/web.php` (Inertia pages), `routes/api.php` (JSON APIs)
+
+### Frontend (Inertia + React)
+- **Pages**: `resources/js/pages/` - Inertia page components
+- **Components**: `resources/js/components/` - reusable UI components
+- **UI Primitives**: `resources/js/components/ui/` - Radix-based primitives
+- **Routes**: `resources/js/routes/` - Wayfinder-generated TypeScript route functions
+- **Actions**: `resources/js/actions/` - Wayfinder-generated controller bindings
+
+### Go API Service
+- Location: `services/go-api/`
+- Entry point: `services/go-api/cmd/`
+- Internal packages: `services/go-api/internal/`
+- Connects to Redis for queue operations
+
+## Key Patterns
+
+### Wayfinder Route Integration
+Frontend imports routes from generated files:
+```tsx
+import { login, dashboard } from '@/routes';
+import StoreDeveloperKey from '@/actions/Api/DeveloperKeyController';
+
+// Usage
+<Link href={login()}>Sign In</Link>
+StoreDeveloperKey({ email, turnstile_token });
+```
+
+### Inertia Pages
+Server-side uses `Inertia::render()`:
+```php
+return Inertia::render('Dashboard', ['props' => $data]);
+```
+
+### Form Validation
+Always use Form Request classes:
+```bash
+php artisan make:request StoreDeveloperKeyRequest
+```
+
+### Testing with Pest
+```bash
+php artisan make:test --pest Feature/Auth/LoginTest
+```
+
+## Environment & Configuration
+
+- Environment ownership is explicit in `config/topology.php`
+- Use `config()` not `env()` outside config files
+- Local ports are configurable via `.env` (e.g., `REDIS_HOST_PORT=16379`)
+
+## Deployment
+
+- **Railway**: Laravel portal (web + worker + cron), Postgres, Redis
+- **Cloudflare**: Go API (primary edge deployment)
+
+Config files:
+- `railway.json`, `railway-worker.json`, `railway-cron.json` - service configs
+- `railpack.json` - Railpack build config
+- `railway/*.sh` - deployment scripts
+
 <laravel-boost-guidelines>
 === foundation rules ===
 

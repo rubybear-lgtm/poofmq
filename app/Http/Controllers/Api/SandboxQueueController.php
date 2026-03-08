@@ -18,7 +18,7 @@ class SandboxQueueController extends Controller
     ) {}
 
     /**
-     * Store a newly created sandbox queue.
+     * Store a newly created instant-start queue.
      */
     public function store(StoreSandboxQueueRequest $request): JsonResponse
     {

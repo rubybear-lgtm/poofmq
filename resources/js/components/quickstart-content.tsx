@@ -1,9 +1,10 @@
 import {
     ArrowRightLeft,
-    BookOpen,
+    ArrowUpRight,
     Check,
     Code2,
     FileCode,
+    Gauge,
     KeyRound,
     Lock,
     MessageSquareWarning,
@@ -24,10 +25,23 @@ const SDK_READMES = {
 } as const;
 
 const PRODUCTION_API_BASE_URL = 'https://go-api-production-ac36.up.railway.app';
-const LOCAL_API_BASE_URL = 'http://localhost:8080';
 const SDK_LANGUAGE_STORAGE_KEY = 'poofmq-sdk-language';
 
 type SdkLanguage = 'node' | 'python';
+type CodeLanguage = 'shell' | 'javascript' | 'python' | 'plain';
+type HighlightTokenType =
+    | 'comment'
+    | 'command'
+    | 'function'
+    | 'identifier'
+    | 'keyword'
+    | 'number'
+    | 'operator'
+    | 'property'
+    | 'punctuation'
+    | 'string'
+    | 'variable'
+    | 'plain';
 
 type SdkGuideSection = {
     id: string;
@@ -69,7 +83,7 @@ const sdkGuides: SdkGuideSection[] = [
         title: 'Quickstart',
         icon: Rocket,
         body: [
-            'Install the SDK, create a client, then push and pop one message. This is the shortest path from zero to a working queue consumer.',
+            'Install the SDK, create a client, then push and pop one message.',
             'The language toggle changes every code sample on this page while keeping the behavior and guidance consistent.',
         ],
         snippets: {
@@ -111,7 +125,7 @@ message = client.pop("your-queue-id")`,
         title: 'Authentication',
         icon: KeyRound,
         body: [
-            'Queues created from START INSTANTLY do not require a key. Use a developer key when you want reusable access across projects and environments.',
+            'Queues created from the instant queue flow do not require a key. Use an API key when you want reusable access across projects and environments.',
             'Both SDKs accept a raw key or a Bearer token string and send the Authorization header for you.',
         ],
         snippets: {
@@ -280,9 +294,11 @@ function getInitialLanguage(): SdkLanguage {
 export function QuickstartContent({
     startHref,
     quickstartHref,
+    showQuickstartLink = true,
 }: {
     quickstartHref: string;
     startHref: string;
+    showQuickstartLink?: boolean;
 }) {
     const [sdkLanguage, setSdkLanguage] =
         useState<SdkLanguage>(getInitialLanguage);
@@ -295,152 +311,153 @@ export function QuickstartContent({
     const selectedLanguageLabel = sdkLanguage === 'node' ? 'Node' : 'Python';
 
     return (
-        <>
-            <div className="mt-8 grid gap-4 xl:grid-cols-3">
-                <section className="rounded-xl border border-border bg-card p-6">
-                    <div className="flex items-start gap-4">
-                        <Rocket className="mt-1 size-6 shrink-0 text-primary" />
-                        <div>
-                            <h2 className="text-lg font-bold">Start Paths</h2>
-                            <div className="mt-4 space-y-4 text-sm text-muted-foreground">
-                                <div className="border-l-2 border-primary pl-4">
-                                    <p className="font-semibold text-foreground">
-                                        Start Instantly
-                                    </p>
-                                    <p className="mt-1">
-                                        Create a queue immediately, copy the
-                                        queue ID, and start pushing messages.
-                                    </p>
-                                </div>
-                                <div className="border-l-2 border-border pl-4">
-                                    <p className="font-semibold text-foreground">
-                                        Get Free Dev Key
-                                    </p>
-                                    <p className="mt-1">
-                                        Use a reusable Bearer token for SDK
-                                        work, projects, and key management.
-                                    </p>
-                                </div>
-                                <a
-                                    href={startHref}
-                                    className="inline-flex items-center gap-1.5 font-medium text-primary hover:text-primary/80"
-                                >
-                                    Open Start Flow
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                <section
-                    className="rounded-xl border border-border bg-card p-6"
-                    data-testid="quickstart-link"
-                >
-                    <div className="flex items-start gap-4">
-                        <BookOpen className="mt-1 size-6 shrink-0 text-primary" />
-                        <div>
-                            <h2 className="text-lg font-bold">
-                                Quickstart URL
-                            </h2>
-                            <p className="mt-3 text-sm text-muted-foreground">
-                                This page is also available directly at{' '}
-                                <span className="font-mono text-foreground">
-                                    /docs/quickstart
-                                </span>
-                                .
-                            </p>
+        <section className="mt-8 grid gap-6 xl:grid-cols-[20rem_minmax(0,1fr)]">
+            <aside className="xl:sticky xl:top-8 xl:self-start">
+                <div className="overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-soft">
+                    <div className="border-b border-border px-6 py-6">
+                        <h2 className="text-sm font-semibold tracking-tight">
+                            On this page
+                        </h2>
+                        <nav className="mt-3 space-y-1.5">
                             <a
-                                href={quickstartHref}
-                                className="mt-4 inline-flex items-center gap-1.5 font-medium text-primary hover:text-primary/80"
+                                href="#http-quickstart"
+                                className="block text-sm text-muted-foreground hover:text-foreground"
                             >
-                                Open Direct Link
+                                HTTP Quickstart
+                            </a>
+                            <a
+                                href="#sdk-guide"
+                                className="block text-sm text-muted-foreground hover:text-foreground"
+                            >
+                                SDK Guide
+                            </a>
+                        </nav>
+                    </div>
+
+                    <div className="space-y-6 px-6 py-6">
+                        <a
+                            href={startHref}
+                            className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80"
+                        >
+                            Open start flow
+                            <ArrowUpRight className="size-4" />
+                        </a>
+
+                        <div className="space-y-3 rounded-2xl border border-border bg-background p-4">
+                            <div className="flex items-start gap-3">
+                                <Gauge className="mt-0.5 size-5 shrink-0 text-primary" />
+                                <div>
+                                    <p className="font-medium text-foreground">
+                                        Shared SDK guide
+                                    </p>
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        Switch between Node and Python while
+                                        keeping the same request flow and method
+                                        coverage.
+                                    </p>
+                                </div>
+                            </div>
+                            <a
+                                href={selectedReadme}
+                                rel="noreferrer"
+                                target="_blank"
+                                className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80"
+                            >
+                                Open {selectedLanguageLabel} README
+                                <ArrowUpRight className="size-4" />
                             </a>
                         </div>
-                    </div>
-                </section>
-                <section className="rounded-xl border border-border bg-card p-6">
-                    <div className="flex items-start gap-4">
-                        <KeyRound className="mt-1 size-6 shrink-0 text-primary" />
-                        <div>
-                            <h2 className="text-lg font-bold">
-                                Shared SDK Guide
-                            </h2>
-                            <div className="mt-4 space-y-3 text-sm text-muted-foreground">
-                                <p>
-                                    One guide, two languages. The behavior,
-                                    concepts, and caveats stay shared while the
-                                    examples switch between Node and Python.
-                                </p>
-                                <p>
-                                    Current selection:{' '}
-                                    <span className="font-semibold text-foreground">
-                                        {selectedLanguageLabel}
-                                    </span>
-                                </p>
-                                <a
-                                    href={selectedReadme}
-                                    rel="noreferrer"
-                                    target="_blank"
-                                    className="inline-flex items-center gap-1.5 font-medium text-primary hover:text-primary/80"
-                                >
-                                    Open {selectedLanguageLabel} README
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </div>
-            <section className="mt-8 grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-                <div className="rounded-2xl border border-border bg-card p-6">
-                    <div className="flex items-start gap-4">
-                        <TerminalSquare className="mt-1 size-6 shrink-0 text-primary" />
-                        <div className="w-full">
-                            <h2 className="text-lg font-bold">
-                                HTTP Quickstart
-                            </h2>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                                Start with raw HTTP if you want to prove the API
-                                flow first. Then switch to the shared SDK guide
-                                below for reusable application code.
-                            </p>
-                            <div className="mt-6 space-y-6">
-                                <CodeBlock
-                                    code={envExample}
-                                    label="Environment"
-                                />
-                                <div className="grid gap-4 lg:grid-cols-2">
-                                    <InfoPanel
-                                        icon={ArrowRightLeft}
-                                        title="API Base URL"
-                                        body={`Production: ${PRODUCTION_API_BASE_URL}\nLocal: ${LOCAL_API_BASE_URL}`}
-                                    />
-                                    <InfoPanel
-                                        icon={KeyRound}
-                                        title="Auth Header"
-                                        body="Optional for instant queues. Recommended whenever you are using a reusable dev key."
-                                    />
-                                </div>
-                                <CodeBlock
-                                    code={pushExample}
-                                    label="Push a Message"
-                                />
-                                <CodeBlock
-                                    code={popExample}
-                                    label="Pop a Message"
-                                />
-                                <CodeBlock
-                                    code={authExample}
-                                    label="Authenticated Request"
-                                />
-                            </div>
-                        </div>
+
+                        {showQuickstartLink && (
+                            <a
+                                href={quickstartHref}
+                                className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80"
+                                data-testid="quickstart-link"
+                            >
+                                Open direct quickstart link
+                                <ArrowUpRight className="size-4" />
+                            </a>
+                        )}
                     </div>
                 </div>
+            </aside>
+
+            <div className="space-y-6">
+                <section
+                    id="http-quickstart"
+                    className="overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-soft"
+                >
+                    <div className="border-b border-border px-6 py-6 md:px-8">
+                        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                            <div className="max-w-3xl">
+                                <p className="text-xs font-medium tracking-[0.2em] text-muted-foreground">
+                                    HTTP QUICKSTART
+                                </p>
+                                <h2 className="mt-3 text-3xl font-semibold tracking-tight">
+                                    Queue workflow over plain HTTP.
+                                </h2>
+                                <p className="mt-3 text-sm leading-7 text-muted-foreground md:text-base">
+                                    Set the base URL and queue identifiers, then
+                                    send and receive a message with cURL. The
+                                    SDK examples below follow the same sequence.
+                                </p>
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <InfoChip
+                                    icon={ArrowRightLeft}
+                                    title="Push + pop"
+                                    body="Send one message and read one message back with the minimum request set."
+                                />
+                                <InfoChip
+                                    icon={KeyRound}
+                                    title="Optional auth"
+                                    body="Instant queues work without a key. Reusable environments should use an API key."
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-6 px-6 py-6 md:px-8 md:py-8">
+                        <CodeBlock
+                            code={envExample}
+                            label="Environment"
+                            language="shell"
+                            tone="hero"
+                        />
+
+                        <InfoPanel
+                            icon={KeyRound}
+                            title="Auth Header"
+                            body="Optional for instant queues. Recommended whenever you are using a reusable dev key."
+                        />
+
+                        <div className="grid gap-4 xl:grid-cols-2">
+                            <CodeBlock
+                                code={pushExample}
+                                label="Push a Message"
+                                language="shell"
+                            />
+                            <CodeBlock
+                                code={popExample}
+                                label="Pop a Message"
+                                language="shell"
+                            />
+                        </div>
+
+                        <CodeBlock
+                            code={authExample}
+                            label="Authenticated Request"
+                            language="shell"
+                        />
+                    </div>
+                </section>
+
                 <SdkGuidePanel
                     language={sdkLanguage}
                     onLanguageChange={setSdkLanguage}
                 />
-            </section>
-        </>
+            </div>
+        </section>
     );
 }
 
@@ -452,25 +469,28 @@ function SdkGuidePanel({
     onLanguageChange: (language: SdkLanguage) => void;
 }) {
     return (
-        <section className="rounded-2xl border border-border bg-card p-6">
+        <section
+            id="sdk-guide"
+            className="overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-soft"
+        >
             <div className="flex flex-col gap-6">
-                <div className="border-b border-border pb-6">
+                <div className="border-b border-border px-6 py-6 md:px-8">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                         <div>
-                            <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                            <p className="text-xs font-medium tracking-[0.2em] text-muted-foreground">
                                 SDK Guide
                             </p>
-                            <h2 className="mt-2 text-xl font-bold">
-                                Shared Documentation, Switched Examples
+                            <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+                                SDK examples for both supported languages.
                             </h2>
-                            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                                Pick a language once. Every install command,
-                                constructor example, and method example below
-                                stays in sync with that choice.
+                            <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground md:text-base">
+                                Choose Node or Python once. Every install
+                                command, client example, and method example
+                                below updates to match that selection.
                             </p>
                         </div>
                         <div
-                            className="inline-flex rounded-lg bg-muted p-1"
+                            className="inline-flex rounded-xl border border-border bg-muted/70 p-1"
                             role="tablist"
                             aria-label="SDK language"
                         >
@@ -489,10 +509,11 @@ function SdkGuidePanel({
                         </div>
                     </div>
                 </div>
-                <div className="space-y-4">
-                    {sdkGuides.map((section) => (
+                <div className="space-y-4 px-6 pb-6 md:px-8 md:pb-8">
+                    {sdkGuides.map((section, index) => (
                         <SdkGuideSectionCard
                             key={section.id}
+                            index={index}
                             language={language}
                             section={section}
                         />
@@ -520,9 +541,9 @@ function LanguageToggleButton({
             variant="ghost"
             size="sm"
             className={cn(
-                'min-w-24 gap-1.5',
+                'min-w-24 gap-1.5 rounded-lg px-4',
                 isActive
-                    ? 'rounded-md bg-card text-foreground shadow-sm hover:bg-card'
+                    ? 'bg-card text-foreground shadow-sm hover:bg-card'
                     : 'text-muted-foreground hover:text-foreground',
             )}
             onClick={onClick}
@@ -534,20 +555,33 @@ function LanguageToggleButton({
 }
 
 function SdkGuideSectionCard({
+    index,
     language,
     section,
 }: {
+    index: number;
     language: SdkLanguage;
     section: SdkGuideSection;
 }) {
     const snippet = section.snippets?.[language];
 
     return (
-        <article className="rounded-xl border border-border bg-card p-5">
+        <article className="rounded-[1.5rem] border border-border bg-[linear-gradient(to_bottom,theme(colors.card),theme(colors.muted/20))] p-5 md:p-6">
             <div className="flex items-start gap-4">
-                <section.icon className="mt-0.5 size-5 shrink-0 text-primary" />
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
+                    <section.icon className="size-5" />
+                </div>
                 <div className="w-full">
-                    <h3 className="font-bold">{section.title}</h3>
+                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <p className="text-xs font-medium tracking-[0.2em] text-muted-foreground">
+                                STEP {String(index + 1).padStart(2, '0')}
+                            </p>
+                            <h3 className="mt-1 text-xl font-semibold tracking-tight">
+                                {section.title}
+                            </h3>
+                        </div>
+                    </div>
                     <div className="mt-3 space-y-3 text-sm text-muted-foreground">
                         {section.body.map((paragraph) => (
                             <p key={paragraph}>{paragraph}</p>
@@ -565,6 +599,11 @@ function SdkGuideSectionCard({
                             <CodeBlock
                                 code={snippet}
                                 label={`${section.title} - ${language === 'node' ? 'Node' : 'Python'}`}
+                                language={
+                                    language === 'node'
+                                        ? 'javascript'
+                                        : 'python'
+                                }
                             />
                         </div>
                     ) : null}
@@ -576,21 +615,32 @@ function SdkGuideSectionCard({
 
 function DetailPill({ detail }: { detail: string }) {
     return (
-        <div className="flex items-start gap-3 rounded-lg bg-muted p-3">
+        <div className="flex items-start gap-3 rounded-xl border border-border bg-background/80 p-3">
             <Check className="mt-0.5 size-4 shrink-0 text-primary" />
             <p className="text-sm text-muted-foreground">{detail}</p>
         </div>
     );
 }
 
-function CodeBlock({ code, label }: { code: string; label: string }) {
+function CodeBlock({
+    code,
+    label,
+    language = 'plain',
+    tone = 'default',
+}: {
+    code: string;
+    label: string;
+    language?: CodeLanguage;
+    tone?: 'default' | 'hero';
+}) {
     const [copiedText, copyToClipboard] = useClipboard();
     const isCopied = copiedText === code;
+    const highlightedLines = highlightCode(code, language);
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                <p className="text-xs font-medium tracking-[0.2em] text-muted-foreground">
                     {label}
                 </p>
                 <Button
@@ -605,8 +655,35 @@ function CodeBlock({ code, label }: { code: string; label: string }) {
                     {isCopied ? 'Copied' : 'Copy'}
                 </Button>
             </div>
-            <pre className="overflow-x-auto rounded-lg border border-border bg-muted p-4 font-mono text-sm">
-                <code>{code}</code>
+            <pre
+                className={cn(
+                    'overflow-x-auto rounded-2xl border p-5 font-mono text-sm leading-7',
+                    tone === 'hero'
+                        ? 'border-primary/15 bg-[linear-gradient(180deg,theme(colors.muted),theme(colors.background))]'
+                        : 'border-border bg-muted/70',
+                )}
+            >
+                <code className="block min-w-max">
+                    {highlightedLines.map((line, index) => (
+                        <div
+                            key={`${label}-${index}`}
+                            className="min-h-[1.75rem]"
+                        >
+                            {line.length === 0 ? (
+                                <span>&nbsp;</span>
+                            ) : (
+                                line.map((token, tokenIndex) => (
+                                    <span
+                                        key={`${label}-${index}-${tokenIndex}`}
+                                        className={tokenClassName(token.type)}
+                                    >
+                                        {token.value}
+                                    </span>
+                                ))
+                            )}
+                        </div>
+                    ))}
+                </code>
             </pre>
         </div>
     );
@@ -622,11 +699,11 @@ function InfoPanel({
     title: string;
 }) {
     return (
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-border bg-background/75 p-5">
             <div className="flex items-start gap-3">
                 <Icon className="mt-0.5 size-5 shrink-0 text-primary" />
                 <div>
-                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                    <p className="text-xs font-medium tracking-[0.2em] text-muted-foreground">
                         {title}
                     </p>
                     <p className="mt-2 text-sm whitespace-pre-line text-muted-foreground">
@@ -636,4 +713,262 @@ function InfoPanel({
             </div>
         </div>
     );
+}
+
+function InfoChip({
+    body,
+    icon: Icon,
+    title,
+}: {
+    body: string;
+    icon: LucideIcon;
+    title: string;
+}) {
+    return (
+        <div className="rounded-2xl border border-border bg-background/80 p-4">
+            <div className="flex items-start gap-3">
+                <Icon className="mt-0.5 size-4.5 shrink-0 text-primary" />
+                <div>
+                    <p className="font-medium text-foreground">{title}</p>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                        {body}
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function highlightCode(
+    code: string,
+    language: CodeLanguage,
+): Array<Array<{ type: HighlightTokenType; value: string }>> {
+    return code.split('\n').map((line) => tokenizeLine(line, language));
+}
+
+function tokenizeLine(
+    line: string,
+    language: CodeLanguage,
+): Array<{ type: HighlightTokenType; value: string }> {
+    if (line.length === 0) {
+        return [];
+    }
+
+    if (language === 'shell') {
+        return tokenizeShellLine(line);
+    }
+
+    if (language === 'javascript') {
+        return tokenizeJavaScriptLine(line);
+    }
+
+    if (language === 'python') {
+        return tokenizePythonLine(line);
+    }
+
+    return [{ type: 'plain', value: line }];
+}
+
+function tokenizeShellLine(
+    line: string,
+): Array<{ type: HighlightTokenType; value: string }> {
+    const tokens: Array<{ type: HighlightTokenType; value: string }> = [];
+    const pattern =
+        /(\$[A-Z0-9_]+|\$\{?[A-Z0-9_]+\}?|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\b(?:curl|export|npm|pip|import|from)\b|-{1,2}[a-zA-Z-]+|\b\d+(?:\.\d+)?\b|[{}[\]():,.\\])/g;
+
+    let cursor = 0;
+
+    for (const match of line.matchAll(pattern)) {
+        const value = match[0];
+        const start = match.index ?? 0;
+
+        if (start > cursor) {
+            tokens.push({ type: 'plain', value: line.slice(cursor, start) });
+        }
+
+        let type: HighlightTokenType = 'plain';
+
+        if (value.startsWith('$')) {
+            type = 'variable';
+        } else if (value.startsWith('"') || value.startsWith("'")) {
+            type = 'string';
+        } else if (
+            ['curl', 'export', 'npm', 'pip', 'import', 'from'].includes(value)
+        ) {
+            type =
+                value === 'curl' || value === 'npm' || value === 'pip'
+                    ? 'command'
+                    : 'keyword';
+        } else if (value.startsWith('-')) {
+            type = 'operator';
+        } else if (/^\d/.test(value)) {
+            type = 'number';
+        } else if (/^[{}[\]():,.\\]$/.test(value)) {
+            type = 'punctuation';
+        }
+
+        tokens.push({ type, value });
+        cursor = start + value.length;
+    }
+
+    if (cursor < line.length) {
+        tokens.push({ type: 'plain', value: line.slice(cursor) });
+    }
+
+    return tokens;
+}
+
+function tokenizeJavaScriptLine(
+    line: string,
+): Array<{ type: HighlightTokenType; value: string }> {
+    const tokens: Array<{ type: HighlightTokenType; value: string }> = [];
+    const pattern =
+        /(\/\/.*$|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|\b(?:import|from|const|new|await|if|null|try|catch|console|true|false)\b|\b\d+(?:\.\d+)?\b|[A-Za-z_$][\w$]*(?=\()|(?<=\.)[A-Za-z_$][\w$]*|process\.env\.[A-Z0-9_]+|[{}[\]();,.])/gm;
+
+    let cursor = 0;
+
+    for (const match of line.matchAll(pattern)) {
+        const value = match[0];
+        const start = match.index ?? 0;
+
+        if (start > cursor) {
+            tokens.push({ type: 'plain', value: line.slice(cursor, start) });
+        }
+
+        let type: HighlightTokenType = 'plain';
+
+        if (value.startsWith('//')) {
+            type = 'comment';
+        } else if (
+            value.startsWith('"') ||
+            value.startsWith("'") ||
+            value.startsWith('`')
+        ) {
+            type = 'string';
+        } else if (
+            [
+                'import',
+                'from',
+                'const',
+                'new',
+                'await',
+                'if',
+                'null',
+                'try',
+                'catch',
+                'true',
+                'false',
+            ].includes(value)
+        ) {
+            type = 'keyword';
+        } else if (value === 'console') {
+            type = 'identifier';
+        } else if (value.startsWith('process.env.')) {
+            type = 'variable';
+        } else if (/^\d/.test(value)) {
+            type = 'number';
+        } else if (/^[{}[\]();,.]$/.test(value)) {
+            type = 'punctuation';
+        } else if (/^[A-Za-z_$][\w$]*$/.test(value)) {
+            type =
+                line.slice(start - 1, start) === '.' ? 'property' : 'function';
+        }
+
+        tokens.push({ type, value });
+        cursor = start + value.length;
+    }
+
+    if (cursor < line.length) {
+        tokens.push({ type: 'plain', value: line.slice(cursor) });
+    }
+
+    return tokens;
+}
+
+function tokenizePythonLine(
+    line: string,
+): Array<{ type: HighlightTokenType; value: string }> {
+    const tokens: Array<{ type: HighlightTokenType; value: string }> = [];
+    const pattern =
+        /(#.*$|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\b(?:from|import|try|except|if|is|None|True|False)\b|\b\d+(?:\.\d+)?\b|[A-Za-z_][\w]*(?=\()|(?<=\.)[A-Za-z_][\w]*|[A-Z][A-Za-z0-9_]*|[{}[\]():,.])/gm;
+
+    let cursor = 0;
+
+    for (const match of line.matchAll(pattern)) {
+        const value = match[0];
+        const start = match.index ?? 0;
+
+        if (start > cursor) {
+            tokens.push({ type: 'plain', value: line.slice(cursor, start) });
+        }
+
+        let type: HighlightTokenType = 'plain';
+
+        if (value.startsWith('#')) {
+            type = 'comment';
+        } else if (value.startsWith('"') || value.startsWith("'")) {
+            type = 'string';
+        } else if (
+            [
+                'from',
+                'import',
+                'try',
+                'except',
+                'if',
+                'is',
+                'None',
+                'True',
+                'False',
+            ].includes(value)
+        ) {
+            type = 'keyword';
+        } else if (/^\d/.test(value)) {
+            type = 'number';
+        } else if (/^[{}[\]():,.]$/.test(value)) {
+            type = 'punctuation';
+        } else if (/^[A-Z][A-Za-z0-9_]*$/.test(value)) {
+            type = 'identifier';
+        } else if (/^[A-Za-z_][\w]*$/.test(value)) {
+            type =
+                line.slice(start - 1, start) === '.' ? 'property' : 'function';
+        }
+
+        tokens.push({ type, value });
+        cursor = start + value.length;
+    }
+
+    if (cursor < line.length) {
+        tokens.push({ type: 'plain', value: line.slice(cursor) });
+    }
+
+    return tokens;
+}
+
+function tokenClassName(type: HighlightTokenType): string {
+    switch (type) {
+        case 'comment':
+            return 'text-muted-foreground/80 italic';
+        case 'command':
+            return 'font-semibold text-primary';
+        case 'function':
+            return 'text-sky-700 dark:text-sky-300';
+        case 'identifier':
+            return 'text-violet-700 dark:text-violet-300';
+        case 'keyword':
+            return 'font-medium text-rose-700 dark:text-rose-300';
+        case 'number':
+            return 'text-emerald-700 dark:text-emerald-300';
+        case 'operator':
+            return 'text-foreground';
+        case 'property':
+            return 'text-amber-700 dark:text-amber-300';
+        case 'punctuation':
+            return 'text-muted-foreground';
+        case 'string':
+            return 'text-emerald-700 dark:text-emerald-300';
+        case 'variable':
+            return 'text-cyan-700 dark:text-cyan-300';
+        default:
+            return 'text-foreground';
+    }
 }

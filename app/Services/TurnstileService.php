@@ -19,6 +19,10 @@ class TurnstileService
      */
     public function verify(string $token, ?string $clientIp = null): bool
     {
+        if (app()->environment('local')) {
+            return true;
+        }
+
         if ($this->secretKey === null) {
             return false;
         }

@@ -1,8 +1,9 @@
-.PHONY: infra-up infra-down bootstrap portal-dev full-stack \
+.PHONY: infra-up infra-down bootstrap portal-dev full-stack e2e-local \
 	ci-lint-laravel ci-lint-frontend ci-lint-go ci-test-laravel ci-test-go \
 	ci-test-go-unit ci-test-go-integration \
 	proto-generate proto-deps proto-check-generated generate-artifacts ci-check-generated \
 	openapi-publish sdk-generate setup-hooks \
+	smoke-production validate-rate-limit validate-observability validate-ttl validate-resilience validate-latency release-validate \
 	railway-add-redis railway-add-databases railway-set-worker-cron-vars
 
 BUF_VERSION ?= 1.53.0
@@ -29,6 +30,39 @@ portal-dev:
 full-stack:
 	docker compose up -d
 	composer run dev
+
+e2e-local:
+	chmod +x scripts/e2e-local.sh && ./scripts/e2e-local.sh
+
+smoke-production:
+	chmod +x scripts/smoke-production.sh && ./scripts/smoke-production.sh
+
+validate-rate-limit:
+	php artisan test --compact tests/Feature/Api/SandboxQueueControllerTest.php --filter="applies rate limiting"
+
+validate-observability:
+	php artisan test --compact \
+		tests/Feature/Dashboard/DashboardObservabilityTest.php \
+		tests/Feature/Dashboard/DashboardBillingRunwayTest.php \
+		tests/Feature/Infrastructure/BudgetAssumptionsTest.php \
+		tests/Feature/Jobs/SyncRailwayBillingSnapshotTest.php
+
+validate-ttl:
+	cd services/go-api && go test ./internal/queue -run 'TestClientIntegrationExpiresMessagesUnderTTLPressureWithTestcontainers|TestClient_TTLAlwaysEnforcedOnPush|TestClient_ExpiredMessage' -count=1
+
+validate-resilience:
+	cd services/go-api && go test ./internal/queue -run 'TestClientIntegrationReportsFailureWhenRedisUnavailableWithTestcontainers|TestClientIntegrationCapturesEvictionSignalUnderMemoryPressureWithTestcontainers' -count=1
+
+validate-latency:
+	docker compose up -d redis >/dev/null
+	cd services/go-api && REDIS_HOST=127.0.0.1 REDIS_PORT=$${REDIS_HOST_PORT:-16379} go test ./internal/queue -run '^$$' -bench 'Benchmark(Push|Pop|PushPopRoundTrip)$$' -benchtime=100x -count=1
+
+release-validate:
+	$(MAKE) validate-rate-limit
+	$(MAKE) validate-observability
+	$(MAKE) validate-ttl
+	$(MAKE) validate-resilience
+	$(MAKE) validate-latency
 
 ci-lint-laravel:
 	composer lint:check

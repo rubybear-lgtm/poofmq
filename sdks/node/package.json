@@ -1,18 +1,35 @@
 {
-  "name": "poofmq",
+  "name": "@poofmq/node",
   "version": "1.0.0",
   "description": "poofMQ Node.js SDK - push/pop queue client with optional client-side encryption",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
+    "prepack": "npm run build",
     "test": "node --test test/unit/*.js 2>/dev/null || node --test test/unit/ 2>/dev/null || echo 'Run npm run build first'",
     "test:integration": "node test/integration/run.js"
   },
   "engines": {
     "node": ">=18"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tortolero-ruben/poofmq.git",
+    "directory": "sdks/node"
+  },
+  "homepage": "https://poofmq.com/docs/quickstart",
   "keywords": ["poofmq", "queue", "api", "sdk"],
   "license": "MIT",
   "devDependencies": {

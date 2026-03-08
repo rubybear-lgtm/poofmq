@@ -2,6 +2,7 @@ import { usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -282,21 +283,27 @@ export default function InstantStartDialog({
                 <form className="space-y-5" onSubmit={handleSubmit}>
                     <div className="grid gap-2">
                         {isLocalDevelopment ? (
-                            <div className="border-4 border-[#FFBF00] bg-[#FFBF00]/10 p-4 text-sm font-bold text-[#FFBF00] uppercase">
-                                Local development bypass active. Turnstile is
-                                skipped on localhost.
-                            </div>
+                            <Alert>
+                                <AlertTitle>
+                                    Local development bypass active
+                                </AlertTitle>
+                                <AlertDescription>
+                                    Turnstile is skipped on localhost.
+                                </AlertDescription>
+                            </Alert>
                         ) : siteKey === null ? (
-                            <div className="border-4 border-red-500 bg-red-500/10 p-4 text-sm font-bold text-red-300 uppercase">
-                                Turnstile site key is not configured.
-                            </div>
+                            <Alert variant="destructive">
+                                <AlertDescription>
+                                    Turnstile site key is not configured.
+                                </AlertDescription>
+                            </Alert>
                         ) : (
                             <div
                                 ref={turnstileContainerRef}
-                                className="flex min-h-16 items-center justify-center border-4 border-white/40 bg-black/50 p-4 text-sm text-white/30"
+                                className="flex min-h-16 items-center justify-center rounded-lg border border-border bg-muted p-4 text-sm text-muted-foreground"
                             >
                                 <span className="animate-pulse">
-                                    LOADING_VERIFICATION...
+                                    Loading verification...
                                 </span>
                             </div>
                         )}
@@ -311,27 +318,27 @@ export default function InstantStartDialog({
                                 turnstileToken.length === 0) ||
                             siteKey === null
                         }
-                        className="h-14 w-full border-4 border-white bg-white px-8 text-lg font-black text-black hover:bg-transparent hover:text-white"
+                        className="h-12 w-full text-base"
                     >
                         {isSubmitting
-                            ? 'CREATING QUEUE...'
-                            : 'CREATE QUEUE NOW'}
+                            ? 'Creating queue...'
+                            : 'Create queue now'}
                     </Button>
                 </form>
 
                 {statusMessage !== null && (
-                    <div className="border-4 border-green-500 bg-green-500/10 p-4 text-sm font-bold text-green-300 uppercase">
-                        {statusMessage}
-                    </div>
+                    <Alert variant="success">
+                        <AlertDescription>{statusMessage}</AlertDescription>
+                    </Alert>
                 )}
 
                 {queue !== null && (
-                    <section className="space-y-4 border-4 border-white bg-[#0a0a0a] p-4">
+                    <section className="space-y-4 rounded-xl border border-border bg-muted/40 p-4">
                         <div className="space-y-2">
-                            <p className="text-xs font-bold text-white/50 uppercase">
-                                QUEUE ID
+                            <p className="text-xs font-medium text-muted-foreground">
+                                Queue ID
                             </p>
-                            <div className="border-2 border-white/40 bg-black px-4 py-2 font-mono text-sm break-all">
+                            <div className="rounded-lg border border-border bg-background px-4 py-2 font-mono text-sm break-all">
                                 {queue.queue_id}
                             </div>
                             <Button
@@ -341,17 +348,17 @@ export default function InstantStartDialog({
                                 onClick={() => {
                                     void copyToClipboard(queue.queue_id);
                                 }}
-                                className="w-full border-2 border-white/40 hover:border-[#FFBF00] hover:bg-[#FFBF00] hover:text-black"
+                                className="w-full"
                             >
-                                {copiedId ? '✓ COPIED' : 'COPY ID'}
+                                {copiedId ? 'Copied ID' : 'Copy ID'}
                             </Button>
                         </div>
 
                         <div className="space-y-2">
-                            <p className="text-xs font-bold text-white/50 uppercase">
-                                QUEUE URL
+                            <p className="text-xs font-medium text-muted-foreground">
+                                Queue URL
                             </p>
-                            <div className="border-2 border-white/40 bg-black px-4 py-2 font-mono text-sm break-all">
+                            <div className="rounded-lg border border-border bg-background px-4 py-2 font-mono text-sm break-all">
                                 {queue.queue_url}
                             </div>
                             <Button
@@ -361,9 +368,9 @@ export default function InstantStartDialog({
                                 onClick={() => {
                                     void copyToClipboard(queue.queue_url);
                                 }}
-                                className="w-full border-2 border-white/40 hover:border-[#FFBF00] hover:bg-[#FFBF00] hover:text-black"
+                                className="w-full"
                             >
-                                {copiedUrl ? '✓ COPIED' : 'COPY URL'}
+                                {copiedUrl ? 'Copied URL' : 'Copy URL'}
                             </Button>
                         </div>
                     </section>

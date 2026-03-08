@@ -3,6 +3,7 @@ import {
     BookOpen,
     Code2,
     FolderGit2,
+    KeyRound,
     LayoutGrid,
     FolderKanban,
 } from 'lucide-react';
@@ -21,8 +22,12 @@ import {
 } from '@/components/ui/sidebar';
 import type { NavItem } from '@/types';
 import { dashboard } from '@/routes';
+import { index as apiKeysIndex } from '@/routes/api-keys';
 import { index as developersIndex } from '@/routes/developers';
+import { quickstart as docsQuickstart } from '@/routes/docs';
 import { index as projectsIndex } from '@/routes/projects';
+
+const REPOSITORY_URL = 'https://github.com/tortolero-ruben/poofmq';
 
 const mainNavItems: NavItem[] = [
     {
@@ -36,6 +41,11 @@ const mainNavItems: NavItem[] = [
         icon: FolderKanban,
     },
     {
+        title: 'API Keys',
+        href: apiKeysIndex(),
+        icon: KeyRound,
+    },
+    {
         title: 'Developers',
         href: developersIndex(),
         icon: Code2,
@@ -45,12 +55,12 @@ const mainNavItems: NavItem[] = [
 const footerNavItems: NavItem[] = [
     {
         title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
+        href: REPOSITORY_URL,
         icon: FolderGit2,
     },
     {
         title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
+        href: docsQuickstart.url(),
         icon: BookOpen,
     },
 ];

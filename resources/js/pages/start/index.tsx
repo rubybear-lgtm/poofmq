@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useClipboard } from '@/hooks/use-clipboard';
 import AuthLayout from '@/layouts/auth-layout';
@@ -241,7 +242,7 @@ export default function SandboxCreatePage() {
 
     return (
         <AuthLayout
-            title="START_INSTANTLY"
+            title="Start instantly"
             description="Create a free queue and start pushing messages right away"
         >
             <Head title="Start Instantly" />
@@ -249,16 +250,18 @@ export default function SandboxCreatePage() {
             <form className="space-y-5" onSubmit={handleCreateSandboxQueue}>
                 <div className="grid gap-2">
                     {siteKey === null ? (
-                        <div className="border-4 border-red-500 bg-red-500/10 p-4 text-sm font-bold text-red-300 uppercase">
-                            Turnstile site key is not configured.
-                        </div>
+                        <Alert variant="destructive">
+                            <AlertDescription>
+                                Turnstile site key is not configured.
+                            </AlertDescription>
+                        </Alert>
                     ) : (
                         <div
                             ref={turnstileContainerRef}
-                            className="flex min-h-16 items-center justify-center border-4 border-white/40 bg-black/50 p-4 text-sm text-white/30"
+                            className="flex min-h-16 items-center justify-center rounded-lg border border-border bg-muted p-4 text-sm text-muted-foreground"
                         >
                             <span className="animate-pulse">
-                                Loading Verification...
+                                Loading verification...
                             </span>
                         </div>
                     )}
@@ -268,27 +271,26 @@ export default function SandboxCreatePage() {
                 <Button
                     type="submit"
                     disabled={isSubmitting || turnstileToken.length === 0}
-                    className="h-12 w-full text-base font-black uppercase"
+                    className="h-12 w-full text-base"
                 >
-                    {isSubmitting ? 'Creating Queue...' : 'Create Queue Now'}
+                    {isSubmitting ? 'Creating queue...' : 'Create queue now'}
                 </Button>
             </form>
 
             {statusMessage !== null && (
-                <div className="mt-6 border-4 border-green-500 bg-green-500/10 p-4">
-                    <p className="font-bold text-green-400 uppercase">
-                        {statusMessage}
-                    </p>
-                </div>
+                <Alert className="mt-6" variant="success">
+                    <AlertTitle>Queue created</AlertTitle>
+                    <AlertDescription>{statusMessage}</AlertDescription>
+                </Alert>
             )}
 
             {queue !== null && (
-                <section className="mt-6 space-y-4 border-4 border-white bg-[#0a0a0a] p-4">
+                <section className="mt-6 space-y-4 rounded-xl border border-border bg-muted/40 p-4">
                     <div className="space-y-2">
-                        <p className="text-xs font-bold text-white/50 uppercase">
-                            QUEUE_ID
+                        <p className="text-xs font-medium text-muted-foreground">
+                            Queue ID
                         </p>
-                        <div className="border-2 border-white/20 bg-black px-4 py-2 font-mono text-sm break-all">
+                        <div className="rounded-lg border border-border bg-background px-4 py-2 font-mono text-sm break-all">
                             {queue.queue_id}
                         </div>
                         <Button
@@ -299,15 +301,15 @@ export default function SandboxCreatePage() {
                                 void copyToClipboard(queue.queue_id);
                             }}
                         >
-                            {copiedId ? 'COPIED_ID' : 'COPY_ID'}
+                            {copiedId ? 'Copied ID' : 'Copy ID'}
                         </Button>
                     </div>
 
                     <div className="space-y-2">
-                        <p className="text-xs font-bold text-white/50 uppercase">
-                            QUEUE_URL
+                        <p className="text-xs font-medium text-muted-foreground">
+                            Queue URL
                         </p>
-                        <div className="border-2 border-white/20 bg-black px-4 py-2 font-mono text-sm break-all">
+                        <div className="rounded-lg border border-border bg-background px-4 py-2 font-mono text-sm break-all">
                             {queue.queue_url}
                         </div>
                         <Button
@@ -318,17 +320,17 @@ export default function SandboxCreatePage() {
                                 void copyToClipboard(queue.queue_url);
                             }}
                         >
-                            {copiedUrl ? 'COPIED_URL' : 'COPY_URL'}
+                            {copiedUrl ? 'Copied URL' : 'Copy URL'}
                         </Button>
                     </div>
                 </section>
             )}
 
-            <p className="mt-6 text-sm text-white/50">
+            <p className="mt-6 text-sm text-muted-foreground">
                 Need the main landing page?{' '}
                 <Link
                     href={home()}
-                    className="font-bold text-[#FFBF00] uppercase hover:underline"
+                    className="font-medium text-primary hover:underline"
                 >
                     Go back home
                 </Link>

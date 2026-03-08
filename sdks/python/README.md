@@ -2,20 +2,10 @@
 
 Client for the poofMQ API: push and pop messages with optional client-side AES-GCM encryption (zero-knowledge mode). Uses the OpenAPI-generated client and types as the single source of truth.
 
-## Prerequisites
-
-- Python 3.10+
-- Generated API client: from the repo root run `make sdk-generate` so that `sdks/python/generated` exists.
-
-## Install
-
-From the monorepo (from repo root, generate first, then install the generated client and SDK):
+Install from PyPI:
 
 ```bash
-make sdk-generate
-cd sdks/python
-pip install ./generated
-pip install -e .
+pip install poofmq
 ```
 
 ## Usage
@@ -27,8 +17,8 @@ from poofmq import PoofmqClient
 import os
 
 client = PoofmqClient(
-    base_url=os.environ.get("GO_API_BASE_URL", "http://localhost:8080"),
-    api_key=os.environ.get("POOFMQ_API_KEY"),  # omit for sandbox
+    base_url=os.environ.get("POOFMQ_BASE_URL", "https://go-api-production-ac36.up.railway.app"),
+    api_key=os.environ.get("POOFMQ_API_KEY"),  # optional
 )
 
 # Push
@@ -63,16 +53,19 @@ Decrypt a popped message that was sent with client encryption using the same sec
 
 ## Integration tests
 
-With the Go API and Redis running (e.g. `docker compose up -d` and start the API):
+From the monorepo, install the package in editable mode and run against a local API:
 
 ```bash
+make sdk-generate
 cd sdks/python
-GO_API_BASE_URL=http://localhost:8080 python -m test.integration.run
+pip install -e .
+POOFMQ_BASE_URL=http://localhost:8080 python -m test.integration.run
 ```
 
 Or from repo root:
 
 ```bash
-GO_API_BASE_URL=http://localhost:8080 python sdks/python/test/integration/run.py
+POOFMQ_BASE_URL=http://localhost:8080 python sdks/python/test/integration/run.py
 ```
+
 (ensure `sdks/python` is on `PYTHONPATH` or install the package first with `pip install -e sdks/python`).

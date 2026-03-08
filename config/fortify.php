@@ -2,6 +2,8 @@
 
 use Laravel\Fortify\Features;
 
+$emailVerificationRequired = filter_var(env('FORTIFY_EMAIL_VERIFICATION', true), FILTER_VALIDATE_BOOL);
+
 return [
 
     /*
@@ -132,6 +134,8 @@ return [
 
     'views' => true,
 
+    'email_verification_required' => $emailVerificationRequired,
+
     /*
     |--------------------------------------------------------------------------
     | Features
@@ -143,15 +147,15 @@ return [
     |
     */
 
-    'features' => [
+    'features' => array_values(array_filter([
         Features::registration(),
         Features::resetPasswords(),
-        Features::emailVerification(),
+        $emailVerificationRequired ? Features::emailVerification() : null,
         Features::twoFactorAuthentication([
             'confirm' => true,
             'confirmPassword' => true,
             // 'window' => 0
         ]),
-    ],
+    ])),
 
 ];

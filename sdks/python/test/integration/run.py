@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Integration test for the poofMQ Python SDK. Requires a running API (e.g. docker compose up, API on port 8080).
-Usage: GO_API_BASE_URL=http://localhost:8080 python -m test.integration.run
+Usage: POOFMQ_BASE_URL=http://localhost:8080 python -m test.integration.run
 """
 from __future__ import annotations
 
@@ -14,7 +14,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from poofmq import PoofmqClient
 
 def main() -> None:
-    base_url = os.environ.get("GO_API_BASE_URL", "http://localhost:8080")
+    base_url = os.environ.get(
+        "POOFMQ_BASE_URL",
+        os.environ.get("GO_API_BASE_URL", "http://localhost:8080"),
+    )
     client = PoofmqClient(base_url=base_url)
     queue_id = "sdk-python-integration-test"
 

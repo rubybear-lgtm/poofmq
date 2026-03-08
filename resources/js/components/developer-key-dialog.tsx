@@ -2,6 +2,8 @@ import { Link, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -326,14 +328,21 @@ export default function DeveloperKeyDialog({
 
                             <div className="grid gap-2">
                                 {isLocalDevelopment ? (
-                                    <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm text-primary">
-                                        Local development bypass active.
-                                        Turnstile is skipped on localhost.
-                                    </div>
+                                    <Alert>
+                                        <AlertTitle>
+                                            Local development bypass active
+                                        </AlertTitle>
+                                        <AlertDescription>
+                                            Turnstile is skipped on localhost.
+                                        </AlertDescription>
+                                    </Alert>
                                 ) : siteKey === null ? (
-                                    <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-                                        Turnstile site key is not configured.
-                                    </div>
+                                    <Alert variant="destructive">
+                                        <AlertDescription>
+                                            Turnstile site key is not
+                                            configured.
+                                        </AlertDescription>
+                                    </Alert>
                                 ) : (
                                     <div
                                         ref={turnstileContainerRef}
@@ -380,9 +389,12 @@ export default function DeveloperKeyDialog({
                 ) : (
                     <>
                         <DialogHeader className="pb-6">
-                            <DialogTitle className="text-xl text-[#FFBF00]">
-                                YOUR KEY IS READY
-                            </DialogTitle>
+                            <div className="flex items-center gap-3">
+                                <Badge>Ready</Badge>
+                                <DialogTitle className="text-xl">
+                                    Your key is ready
+                                </DialogTitle>
+                            </div>
                             <DialogDescription className="text-base">
                                 Copy it now. This is the only time the full key
                                 is shown.
@@ -390,25 +402,27 @@ export default function DeveloperKeyDialog({
                         </DialogHeader>
 
                         {statusMessage !== null && (
-                            <div className="border-4 border-green-500 bg-green-500/10 p-4 text-sm font-bold text-green-300 uppercase">
-                                {statusMessage}
-                            </div>
+                            <Alert variant="success">
+                                <AlertDescription>
+                                    {statusMessage}
+                                </AlertDescription>
+                            </Alert>
                         )}
 
                         <div className="space-y-2">
-                            <p className="text-xs font-bold text-white/50">
+                            <p className="text-xs font-medium text-muted-foreground">
                                 PROJECT
                             </p>
-                            <div className="border-2 border-white/40 bg-black px-4 py-3 text-lg font-black">
+                            <div className="rounded-lg border border-border bg-muted px-4 py-3 text-lg font-semibold">
                                 {success.project_name}
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <p className="text-xs font-bold text-white/50">
+                            <p className="text-xs font-medium text-muted-foreground">
                                 API KEY
                             </p>
-                            <div className="border-2 border-[#FFBF00]/60 bg-black px-4 py-3 font-mono text-sm break-all">
+                            <div className="rounded-lg border border-primary/20 bg-muted px-4 py-3 font-mono text-sm break-all">
                                 {success.plain_text_key}
                             </div>
                             <Button
@@ -419,17 +433,17 @@ export default function DeveloperKeyDialog({
                                         success.plain_text_key,
                                     );
                                 }}
-                                className="h-11 w-full border-2 border-white/40 hover:border-[#FFBF00] hover:bg-[#FFBF00] hover:text-black"
+                                className="h-11 w-full"
                             >
-                                {copiedKey ? '✓ COPIED' : 'COPY KEY'}
+                                {copiedKey ? 'Copied key' : 'Copy key'}
                             </Button>
                         </div>
 
                         <div className="space-y-2">
-                            <p className="text-xs font-bold text-white/50">
+                            <p className="text-xs font-medium text-muted-foreground">
                                 FIRST SDK SNIPPET
                             </p>
-                            <pre className="overflow-x-auto border-2 border-white/40 bg-black px-4 py-3 text-sm normal-case">
+                            <pre className="code-block">
                                 <code>{sdkSnippet}</code>
                             </pre>
                         </div>
@@ -440,16 +454,16 @@ export default function DeveloperKeyDialog({
                                 onClick={() => {
                                     void copyToClipboard(sdkSnippet);
                                 }}
-                                className="h-14 flex-1 border-4 border-[#FFBF00] bg-[#FFBF00] px-8 text-lg font-black text-black hover:bg-transparent hover:text-[#FFBF00]"
+                                className="h-12 flex-1 text-base"
                             >
-                                COPY SNIPPET
+                                Copy snippet
                             </Button>
 
                             <a
                                 href={success.claim_url}
-                                className="flex h-14 flex-1 items-center justify-center border-4 border-white px-8 text-center text-lg font-black text-white hover:bg-white hover:text-black"
+                                className="inline-flex h-12 flex-1 items-center justify-center rounded-lg border border-border bg-background px-6 text-center text-sm font-medium text-foreground transition-colors hover:bg-muted"
                             >
-                                SET PASSWORD
+                                Set password
                             </a>
                         </div>
                     </>

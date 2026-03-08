@@ -2,19 +2,10 @@
 
 Client for the poofMQ API: push and pop messages with optional client-side AES-GCM encryption (zero-knowledge mode).
 
-## Prerequisites
-
-- Node.js 18+
-- Generated API client: from the repo root run `make sdk-generate` so that `sdks/node/generated` exists.
-
-## Install
-
-From the monorepo:
+Install from npm:
 
 ```bash
-cd sdks/node
-npm install
-npm run build
+npm install @poofmq/node
 ```
 
 ## Usage
@@ -22,21 +13,29 @@ npm run build
 ### Plaintext push and pop
 
 ```javascript
-import { PoofmqClient } from "poofmq";
+import { PoofmqClient } from '@poofmq/node';
 
 const client = new PoofmqClient({
-  baseUrl: process.env.GO_API_BASE_URL || "http://localhost:8080",
-  apiKey: process.env.POOFMQ_API_KEY, // omit for sandbox
+    baseUrl:
+        process.env.POOFMQ_BASE_URL ||
+        'https://go-api-production-ac36.up.railway.app',
+    apiKey: process.env.POOFMQ_API_KEY, // optional
 });
 
 // Push
-const res = await client.push("my-queue-id", "user.created", { user_id: "123" });
-console.log("Message ID:", res.messageId);
+const res = await client.push('my-queue-id', 'user.created', {
+    user_id: '123',
+});
+console.log('Message ID:', res.messageId);
 
 // Pop
-const message = await client.pop("my-queue-id");
+const message = await client.pop('my-queue-id');
 if (message) {
-  console.log("Event:", message.envelope?.eventType, message.envelope?.payload);
+    console.log(
+        'Event:',
+        message.envelope?.eventType,
+        message.envelope?.payload,
+    );
 }
 ```
 
@@ -44,10 +43,10 @@ if (message) {
 
 ```javascript
 const res = await client.push(
-  "my-queue-id",
-  "order.placed",
-  { order_id: "ord-1", amount: 99 },
-  { encrypt: true, encryptionKey: "my-secret-passphrase" }
+    'my-queue-id',
+    'order.placed',
+    { order_id: 'ord-1', amount: 99 },
+    { encrypt: true, encryptionKey: 'my-secret-passphrase' },
 );
 ```
 
@@ -61,8 +60,12 @@ Decrypt a popped message that was sent with client encryption using the same sec
 
 ## Integration tests
 
-With the Go API and Redis running (e.g. `docker compose up -d` and start the API):
+From the monorepo, build the package first and run against a local API:
 
 ```bash
+make sdk-generate
+cd sdks/node
+npm install
+npm run build
 GO_API_BASE_URL=http://localhost:8080 npm run test:integration
 ```

@@ -26,12 +26,7 @@ export default function Register() {
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label
-                                    htmlFor="name"
-                                    className="text-xs tracking-wide text-white/70 uppercase"
-                                >
-                                    Name
-                                </Label>
+                                <Label htmlFor="name">Name</Label>
                                 <Input
                                     id="name"
                                     type="text"
@@ -50,12 +45,7 @@ export default function Register() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label
-                                    htmlFor="email"
-                                    className="text-xs tracking-wide text-white/70 uppercase"
-                                >
-                                    Email
-                                </Label>
+                                <Label htmlFor="email">Email</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -70,12 +60,7 @@ export default function Register() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label
-                                    htmlFor="password"
-                                    className="text-xs tracking-wide text-white/70 uppercase"
-                                >
-                                    Password
-                                </Label>
+                                <Label htmlFor="password">Password</Label>
                                 <Input
                                     id="password"
                                     type="password"
@@ -90,10 +75,7 @@ export default function Register() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label
-                                    htmlFor="password_confirmation"
-                                    className="text-xs tracking-wide text-white/70 uppercase"
-                                >
+                                <Label htmlFor="password_confirmation">
                                     Confirm Password
                                 </Label>
                                 <Input
@@ -113,7 +95,7 @@ export default function Register() {
 
                             <Button
                                 type="submit"
-                                className="mt-2 h-12 w-full text-base font-black uppercase"
+                                className="mt-2 h-12 w-full text-base"
                                 tabIndex={5}
                                 data-test="register-user-button"
                             >
@@ -122,13 +104,9 @@ export default function Register() {
                             </Button>
                         </div>
 
-                        <div className="text-center text-sm text-white/50">
+                        <div className="text-center text-sm text-muted-foreground">
                             Already have an account?{' '}
-                            <TextLink
-                                href={login()}
-                                tabIndex={6}
-                                className="font-bold text-[#FFBF00] uppercase"
-                            >
+                            <TextLink href={login()} tabIndex={6}>
                                 Sign In
                             </TextLink>
                         </div>

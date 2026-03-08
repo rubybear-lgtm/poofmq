@@ -38,12 +38,7 @@ export default function Login({
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label
-                                    htmlFor="email"
-                                    className="text-xs tracking-wide text-white/70 uppercase"
-                                >
-                                    Email
-                                </Label>
+                                <Label htmlFor="email">Email</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -60,16 +55,11 @@ export default function Login({
 
                             <div className="grid gap-2">
                                 <div className="flex items-center justify-between">
-                                    <Label
-                                        htmlFor="password"
-                                        className="text-xs tracking-wide text-white/70 uppercase"
-                                    >
-                                        Password
-                                    </Label>
+                                    <Label htmlFor="password">Password</Label>
                                     {canResetPassword && (
                                         <TextLink
                                             href={request()}
-                                            className="text-xs font-bold tracking-wide text-[#FFBF00] uppercase"
+                                            className="text-xs"
                                             tabIndex={5}
                                         >
                                             Forgot?
@@ -95,17 +85,12 @@ export default function Login({
                                     name="remember"
                                     tabIndex={3}
                                 />
-                                <Label
-                                    htmlFor="remember"
-                                    className="text-sm font-bold tracking-wide uppercase"
-                                >
-                                    Remember Me
-                                </Label>
+                                <Label htmlFor="remember">Remember Me</Label>
                             </div>
 
                             <Button
                                 type="submit"
-                                className="mt-4 h-12 w-full text-base font-black uppercase"
+                                className="mt-4 h-12 w-full text-base"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"
@@ -116,13 +101,9 @@ export default function Login({
                         </div>
 
                         {canRegister && (
-                            <div className="text-center text-sm text-white/50">
+                            <div className="text-center text-sm text-muted-foreground">
                                 No account?{' '}
-                                <TextLink
-                                    href={register()}
-                                    tabIndex={5}
-                                    className="font-bold text-[#FFBF00] uppercase"
-                                >
+                                <TextLink href={register()} tabIndex={5}>
                                     Get Free Dev Key
                                 </TextLink>
                             </div>
@@ -132,7 +113,7 @@ export default function Login({
             </Form>
 
             {status && (
-                <div className="mt-4 border-4 border-[#FFBF00] bg-[#FFBF00]/10 p-4 text-center text-sm font-bold text-[#FFBF00] uppercase">
+                <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4 text-center text-sm font-medium text-primary">
                     {status}
                 </div>
             )}

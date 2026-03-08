@@ -3,6 +3,7 @@ import { Form, Head } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,9 +20,9 @@ export default function ForgotPassword({ status }: { status?: string }) {
             <Head title="Forgot password" />
 
             {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    {status}
-                </div>
+                <Alert className="mb-4" variant="success">
+                    <AlertDescription>{status}</AlertDescription>
+                </Alert>
             )}
 
             <div className="space-y-6">
@@ -29,12 +30,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label
-                                    htmlFor="email"
-                                    className="text-xs tracking-wide text-white/70 uppercase"
-                                >
-                                    Email
-                                </Label>
+                                <Label htmlFor="email">Email</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -50,7 +46,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
                             <div className="my-6 flex items-center justify-start">
                                 <Button
-                                    className="h-12 w-full text-base font-black uppercase"
+                                    className="h-12 w-full text-base"
                                     disabled={processing}
                                     data-test="email-password-reset-link-button"
                                 >
@@ -64,14 +60,9 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     )}
                 </Form>
 
-                <div className="space-x-1 text-center text-sm text-white/50">
+                <div className="space-x-1 text-center text-sm text-muted-foreground">
                     <span>Remembered?</span>
-                    <TextLink
-                        href={login()}
-                        className="font-bold text-[#FFBF00] uppercase"
-                    >
-                        Sign In
-                    </TextLink>
+                    <TextLink href={login()}>Sign In</TextLink>
                 </div>
             </div>
         </AuthLayout>

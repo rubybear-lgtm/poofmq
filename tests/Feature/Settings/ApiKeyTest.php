@@ -17,6 +17,14 @@ test('unauthenticated users cannot view api keys index', function () {
     $response->assertRedirect(route('login'));
 });
 
+test('legacy settings api keys url redirects to top-level api keys page', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->get('/settings/api-keys');
+
+    $response->assertRedirect(route('api-keys.index'));
+});
+
 test('users can create an api key', function () {
     Bus::fake();
 
@@ -358,6 +366,28 @@ test('users can view their api keys index', function () {
 
     $response->assertOk();
     expect($response->inertiaProps('apiKeys'))->toHaveCount(3);
+});
+
+test('api key index includes active user projects for inventory filters', function () {
+    $user = User::factory()->create();
+    $activeProject = Project::factory()->create([
+        'user_id' => $user->id,
+        'name' => 'Production API',
+    ]);
+    Project::factory()->archived()->create([
+        'user_id' => $user->id,
+        'name' => 'Archived API',
+    ]);
+    Project::factory()->create([
+        'user_id' => User::factory()->create()->id,
+        'name' => 'Another User Project',
+    ]);
+
+    $response = $this->actingAs($user)->get(route('api-keys.index'));
+
+    $response->assertOk();
+    expect($response->inertiaProps('projects'))->toHaveCount(1);
+    expect($response->inertiaProps('projects.0.id'))->toBe($activeProject->id);
 });
 
 test('users cannot view other users api keys in list', function () {

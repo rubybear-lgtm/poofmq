@@ -4,17 +4,18 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 const alertVariants = cva(
-  "relative w-full border-4 p-4 text-sm grid has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] grid-cols-[0_1fr] has-[>svg]:gap-x-3 gap-y-0.5 items-start [&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current",
+  "relative grid w-full items-start gap-y-0.5 rounded-xl border p-4 text-sm has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] has-[>svg]:gap-x-3 grid-cols-[0_1fr] [&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current",
   {
     variants: {
       variant: {
-        default: "border-[#FFBF00] bg-[#FFBF00]/10 text-white",
+        default:
+          "border-primary/20 bg-primary/5 text-foreground [&>svg]:text-primary",
         destructive:
-          "border-red-500 bg-red-500/10 text-white [&>svg]:text-red-400 *:data-[slot=alert-description]:text-white/70",
+          "border-destructive/20 bg-destructive/5 text-foreground [&>svg]:text-destructive",
         success:
-          "border-green-500 bg-green-500/10 text-white [&>svg]:text-green-400 *:data-[slot=alert-description]:text-white/70",
+          "border-emerald-500/20 bg-emerald-500/8 text-foreground [&>svg]:text-emerald-600 dark:[&>svg]:text-emerald-400",
         warning:
-          "border-yellow-500 bg-yellow-500/10 text-white [&>svg]:text-yellow-400 *:data-[slot=alert-description]:text-white/70",
+          "border-amber-500/20 bg-amber-500/8 text-foreground [&>svg]:text-amber-600 dark:[&>svg]:text-amber-400",
       },
     },
     defaultVariants: {
@@ -43,7 +44,7 @@ function AlertTitle({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="alert-title"
       className={cn(
-        "col-start-2 line-clamp-1 min-h-4 font-bold uppercase tracking-wide",
+        "col-start-2 min-h-4 line-clamp-1 font-medium",
         className
       )}
       {...props}
@@ -59,7 +60,7 @@ function AlertDescription({
     <div
       data-slot="alert-description"
       className={cn(
-        "text-white/70 col-start-2 grid justify-items-start gap-1 text-sm [&_p]:leading-relaxed",
+        "col-start-2 grid justify-items-start gap-1 text-sm text-muted-foreground [&_p]:leading-relaxed",
         className
       )}
       {...props}

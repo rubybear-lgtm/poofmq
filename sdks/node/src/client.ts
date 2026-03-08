@@ -20,7 +20,7 @@ export type { V1PayloadEnvelope, V1PushMessageResponse, V1PopMessageResponse, V1
 
 export interface PoofmqClientOptions {
   baseUrl: string;
-  /** API key or Bearer token for authenticated queues. Omit for sandbox/anonymous. */
+  /** API key or Bearer token for authenticated queues. Optional for instant queues. */
   apiKey?: string;
 }
 

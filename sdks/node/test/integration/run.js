@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 /**
  * Integration test: push and pop against a running poofMQ API.
- * Set GO_API_BASE_URL (default http://localhost:8080). Queue is created implicitly by push.
+ * Set POOFMQ_BASE_URL (or GO_API_BASE_URL) to target a running API.
+ * Queue is created implicitly by push.
  */
 import { PoofmqClient } from "../../dist/src/index.js";
 
-const baseUrl = process.env.GO_API_BASE_URL || "http://localhost:8080";
+const baseUrl =
+  process.env.POOFMQ_BASE_URL || process.env.GO_API_BASE_URL || "http://localhost:8080";
 const client = new PoofmqClient({ baseUrl });
 
 const queueId = `sdk-test-${Date.now()}`;

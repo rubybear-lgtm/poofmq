@@ -3,6 +3,24 @@
 use App\Services\TurnstileService;
 use Illuminate\Support\Facades\Http;
 
+it('bypasses verification in local environment', function () {
+    $originalEnvironment = app()->environment();
+    app()->instance('env', 'local');
+
+    Http::fake();
+
+    $service = new TurnstileService(
+        secretKey: 'test-secret-key',
+        verifyUrl: 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
+    );
+
+    expect($service->verify('local-development-bypass'))->toBeTrue();
+
+    Http::assertNothingSent();
+
+    app()->instance('env', $originalEnvironment);
+});
+
 it('returns true when turnstile verification succeeds', function () {
     Http::fake([
         'challenges.cloudflare.com/*' => Http::response(['success' => true], 200),

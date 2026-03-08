@@ -6,6 +6,9 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             sidebarOpen: boolean;
+            turnstile: {
+                siteKey: string | null;
+            };
             [key: string]: unknown;
         };
     }

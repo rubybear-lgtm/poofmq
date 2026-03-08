@@ -73,4 +73,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/tortolero-ruben/poofmq/gen/go/poofmq => ../../gen/go/poofmq/v1
+replace github.com/tortolero-ruben/poofmq/gen/go/poofmq => ./gen/go/poofmq/v1

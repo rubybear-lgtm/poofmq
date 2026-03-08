@@ -2,7 +2,7 @@
 
 use function Pest\Laravel\get;
 
-test('sandbox page can be viewed without authentication', function () {
-    get(route('sandbox.index'))
+test('start page can be viewed without authentication', function () {
+    get(route('start.index'))
         ->assertOk();
 });

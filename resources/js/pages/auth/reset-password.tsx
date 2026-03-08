@@ -28,12 +28,7 @@ export default function ResetPassword({ token, email }: Props) {
                 {({ processing, errors }) => (
                     <div className="grid gap-6">
                         <div className="grid gap-2">
-                            <Label
-                                htmlFor="email"
-                                className="text-xs tracking-wide text-white/70 uppercase"
-                            >
-                                Email
-                            </Label>
+                            <Label htmlFor="email">Email</Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -50,12 +45,7 @@ export default function ResetPassword({ token, email }: Props) {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label
-                                htmlFor="password"
-                                className="text-xs tracking-wide text-white/70 uppercase"
-                            >
-                                New Password
-                            </Label>
+                            <Label htmlFor="password">New Password</Label>
                             <Input
                                 id="password"
                                 type="password"
@@ -69,10 +59,7 @@ export default function ResetPassword({ token, email }: Props) {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label
-                                htmlFor="password_confirmation"
-                                className="text-xs tracking-wide text-white/70 uppercase"
-                            >
+                            <Label htmlFor="password_confirmation">
                                 Confirm Password
                             </Label>
                             <Input
@@ -91,7 +78,7 @@ export default function ResetPassword({ token, email }: Props) {
 
                         <Button
                             type="submit"
-                            className="mt-4 h-12 w-full text-base font-black uppercase"
+                            className="mt-4 h-12 w-full text-base"
                             disabled={processing}
                             data-test="reset-password-button"
                         >
