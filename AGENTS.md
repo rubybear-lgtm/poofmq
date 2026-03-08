@@ -274,3 +274,38 @@ Wayfinder generates TypeScript functions for Laravel routes. Import from `@/acti
 - IMPORTANT: Activate `developing-with-fortify` skill when working with Fortify authentication features.
 
 </laravel-boost-guidelines>
+
+## Cursor Cloud specific instructions
+
+### Architecture
+
+PoofMQ is a donation-funded, open-source message queue service. The portal is a Laravel 12 + Inertia v2 + React 19 SPA backed by PostgreSQL and Redis. A Go-based gRPC/HTTP API (`services/go-api`) handles core queue operations but is optional for portal development.
+
+### Infrastructure
+
+Redis 7.4 and PostgreSQL 17 run via Docker Compose. Start them with `docker compose up -d redis postgres` (requires Docker daemon running). The Go API service is optional.
+
+### Running the dev server
+
+Use `composer run dev` which starts PHP server, queue worker, Pail log viewer, and Vite dev server concurrently. Alternatively, run `php artisan serve` and `npm run dev` separately. See `Makefile` targets: `make bootstrap`, `make infra-up`, `make portal-dev`, `make full-stack`.
+
+### Running tests
+
+**Critical**: The Cloud Agent environment may inject `.env` values as real shell environment variables, which override `phpunit.xml` test config (PHPUnit 12 uses `force=false` by default on `<env>` elements). You must unset all `phpunit.xml` `<env>` variables plus related DB/Redis/session vars before running tests. Build and run the unset command dynamically by parsing `phpunit.xml` `<env>` names and adding DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, REDIS_CLIENT, REDIS_HOST, REDIS_PASSWORD, REDIS_PORT, REDIS_QUEUE. For example:
+
+```
+env $(php -r "\$x=simplexml_load_file('phpunit.xml'); foreach(\$x->php->env as \$e) echo '-u '.\$e['name'].' ';" ) -u DB_HOST -u DB_PORT -u DB_USERNAME -u DB_PASSWORD -u REDIS_CLIENT -u REDIS_HOST -u REDIS_PASSWORD -u REDIS_PORT -u REDIS_QUEUE php artisan test --compact
+```
+
+Tests use SQLite in-memory and array sessions (per `phpunit.xml`). No Docker services needed for tests.
+
+### Lint commands
+
+- PHP: `vendor/bin/pint --test` (or `make ci-lint-laravel`)
+- Frontend ESLint: `npm run lint:check` (or `make ci-lint-frontend`)
+- Prettier: `npm run format:check`
+- TypeScript: `npm run types:check`
+
+### Frontend ESLint note
+
+There are pre-existing import-order ESLint errors in the codebase (19 errors as of setup). These are not regressions.
