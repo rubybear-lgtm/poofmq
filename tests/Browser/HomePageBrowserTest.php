@@ -16,5 +16,6 @@ it('renders the home page donation call to action without javascript errors', fu
     $visitFunction('/')
         ->assertSee('Use Cases')
         ->assertSee('Event buffering')
+        ->assertSee('Support me on Ko-fi')
         ->assertNoJavaScriptErrors();
 });

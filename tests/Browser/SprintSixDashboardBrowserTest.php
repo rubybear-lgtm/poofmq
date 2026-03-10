@@ -12,14 +12,15 @@ it('renders sprint 6 dashboard panels without javascript errors', function () {
         $this->markTestSkipped('pest-plugin-browser is not installed in this environment.');
     }
 
+    config()->set('services.donations.donation_url', 'https://ko-fi.com/poofmq');
+
     $user = User::factory()->create();
 
     $this->actingAs($user);
 
     $visitFunction('/dashboard')
-        ->assertSee('Funding')
-        ->assertSee('Railway Billing')
-        ->assertSee('Capacity Limit')
-        ->assertSee('Observability')
+        ->assertSee('Funding overview')
+        ->assertSee('Net funding')
+        ->assertSee('Support me on Ko-fi')
         ->assertNoJavaScriptErrors();
 });
