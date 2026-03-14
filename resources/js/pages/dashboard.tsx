@@ -1,6 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import KoFiButton from '@/components/ko-fi-button';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -12,42 +11,17 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
-import { admin as fundingAdmin, index as fundingIndex } from '@/routes/funding';
-
-type FundingSummary = {
-    gross_donations_cents: number;
-    refunds_cents: number;
-    net_funding_cents: number;
-    event_count: number;
-};
-
-type BillingLatest = {
-    workspace_current_spend_cents: number;
-    workspace_estimated_spend_cents: number;
-    poofmq_attributed_current_spend_cents: number;
-    poofmq_attributed_estimated_spend_cents: number;
-    funding_gap_cents: number;
-    runway_months: number;
-    coverage_percent: number;
-    captured_at: string;
-} | null;
-
-type Billing = {
-    latest: BillingLatest;
-    trend: {
-        workspace_current_spend_delta_cents: number;
-        poofmq_attributed_estimated_spend_delta_cents: number;
-        funding_gap_delta_cents: number;
-    };
-    is_stale: boolean;
-    snapshot_age_minutes: number | null;
-};
+import { index as apiKeysIndex } from '@/routes/api-keys';
+import { index as developersIndex } from '@/routes/developers';
+import { quickstart as docsQuickstart } from '@/routes/docs';
+import { index as projectsIndex } from '@/routes/projects';
 
 type Capacity = {
     base_limit_per_minute: number;
     effective_limit_per_minute: number;
     is_boost_active: boolean;
     boost_multiplier: number | null;
+    boost_expires_at: string | null;
 };
 
 type Alert = {
@@ -60,17 +34,14 @@ type Observability = {
     metrics: {
         throughput_total: number;
         error_rate_percent: number;
-        burn_rate_cents_per_day: number;
-        railway_snapshot_age_minutes: number;
+        avg_push_latency_ms: number;
+        avg_pop_latency_ms: number;
+        redis_memory_bytes: number;
     };
     alerts: Alert[];
 };
 
 type DashboardProps = {
-    funding: {
-        summary: FundingSummary;
-    };
-    billing: Billing;
     admin: {
         capacity: Capacity;
         observability: Observability;
@@ -84,34 +55,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-});
-
-function formatCents(cents: number): string {
-    return currencyFormatter.format(cents / 100);
-}
-
-function formatAge(minutes: number | null): string {
-    if (minutes === null) {
-        return 'Unknown';
-    }
-
-    if (minutes < 60) {
-        return `${minutes} min`;
-    }
-
-    return `${(minutes / 60).toFixed(1)} hr`;
-}
-
-export default function Dashboard({ funding, billing, admin }: DashboardProps) {
+export default function Dashboard({ admin }: DashboardProps) {
     const { auth, donationUrl } = usePage().props as {
         auth: { is_admin: boolean };
         donationUrl: string | null;
     };
-    const billingLatest = billing.latest;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -122,42 +70,61 @@ export default function Dashboard({ funding, billing, admin }: DashboardProps) {
                     <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card p-5 md:flex-row md:items-center md:justify-between">
                         <div className="space-y-1">
                             <p className="text-sm font-medium text-muted-foreground">
-                                Funding overview
+                                PoofMQ dashboard
                             </p>
                             <h1 className="text-2xl font-semibold tracking-tight">
-                                Shared summary for all users
+                                Manage the core developer workflow
                             </h1>
+                            <p className="text-sm text-muted-foreground">
+                                Jump into projects, API keys, docs, and the
+                                instant start flow from one place.
+                            </p>
                         </div>
-                        <div className="flex flex-col gap-3 sm:flex-row">
+                        <div className="grid w-full gap-3 sm:grid-cols-2 xl:w-auto">
                             <Button
                                 asChild
                                 variant="outline"
-                                className="w-full sm:w-auto"
+                                className="w-full"
                             >
-                                <Link href={fundingIndex()}>Funding page</Link>
+                                <Link href={projectsIndex()}>Projects</Link>
                             </Button>
-                            {auth.is_admin && (
-                                <Button asChild className="w-full sm:w-auto">
-                                    <Link href={fundingAdmin()}>
-                                        Admin funding details
-                                    </Link>
-                                </Button>
-                            )}
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="w-full"
+                            >
+                                <Link href={apiKeysIndex()}>API Keys</Link>
+                            </Button>
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="w-full"
+                            >
+                                <Link href={developersIndex()}>Developers</Link>
+                            </Button>
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="w-full"
+                            >
+                                <Link href={docsQuickstart.url()}>
+                                    Quickstart docs
+                                </Link>
+                            </Button>
                         </div>
                     </div>
 
                     {donationUrl && (
                         <div className="rounded-2xl border border-[#72a4f2]/40 bg-linear-to-br from-[#72a4f2]/14 via-background to-background p-5 shadow-[0_18px_60px_rgba(114,164,242,0.12)]">
                             <p className="text-xs font-semibold tracking-[0.2em] text-[#72a4f2] uppercase">
-                                Community funded
+                                Support development
                             </p>
                             <h2 className="mt-2 text-xl font-semibold tracking-tight">
-                                Keep PoofMQ free for everyone
+                                Help keep PoofMQ moving
                             </h2>
                             <p className="mt-2 text-sm text-muted-foreground">
-                                Donations help cover hosting and queue
-                                infrastructure so the public free tier can stay
-                                online.
+                                If PoofMQ saves you time, support ongoing
+                                development on Ko-fi.
                             </p>
                             <KoFiButton
                                 href={donationUrl}
@@ -167,179 +134,70 @@ export default function Dashboard({ funding, billing, admin }: DashboardProps) {
                     )}
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Net funding</CardTitle>
-                            <CardDescription>
-                                Donations minus refunds
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                                {formatCents(funding.summary.net_funding_cents)}
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Current spend</CardTitle>
-                            <CardDescription>
-                                Railway workspace usage snapshot
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                                {billingLatest === null
-                                    ? '$0.00'
-                                    : formatCents(
-                                          billingLatest.workspace_current_spend_cents,
-                                      )}
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>PoofMQ estimate</CardTitle>
-                            <CardDescription>
-                                Project-attributed estimate, not invoice exact
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                                {billingLatest === null
-                                    ? '$0.00'
-                                    : formatCents(
-                                          billingLatest.poofmq_attributed_estimated_spend_cents,
-                                      )}
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Funding gap</CardTitle>
-                            <CardDescription>
-                                Remaining projected shortfall
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                                {billingLatest === null
-                                    ? '$0.00'
-                                    : formatCents(
-                                          billingLatest.funding_gap_cents,
-                                      )}
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
-
                 <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Funding posture</CardTitle>
+                            <CardTitle>Account access</CardTitle>
                             <CardDescription>
-                                Summary funding data without internal cost
-                                breakdowns
+                                What your current session can reach from the
+                                dashboard
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            {billingLatest === null ? (
-                                <p className="text-sm text-muted-foreground">
-                                    No Railway funding snapshot has been
-                                    recorded yet.
+                        <CardContent className="space-y-4 text-sm text-muted-foreground">
+                            {auth.is_admin ? (
+                                <p>
+                                    Your account includes internal admin panels
+                                    for capacity controls and observability.
                                 </p>
                             ) : (
-                                <>
-                                    <div className="grid gap-4 md:grid-cols-2">
-                                        <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
-                                            <p className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
-                                                Runway
-                                            </p>
-                                            <p className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-                                                {billingLatest.runway_months.toFixed(
-                                                    2,
-                                                )}{' '}
-                                                months
-                                            </p>
-                                        </div>
-                                        <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
-                                            <p className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
-                                                Coverage
-                                            </p>
-                                            <p className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-                                                {billingLatest.coverage_percent.toFixed(
-                                                    2,
-                                                )}
-                                                %
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
-                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                            <p className="text-sm font-medium">
-                                                Snapshot status
-                                            </p>
-                                            {billing.is_stale ? (
-                                                <Badge variant="destructive">
-                                                    Stale
-                                                </Badge>
-                                            ) : (
-                                                <Badge variant="outline">
-                                                    Fresh
-                                                </Badge>
-                                            )}
-                                        </div>
-                                        <p className="mt-2 text-sm text-muted-foreground">
-                                            Last updated{' '}
-                                            {new Date(
-                                                billingLatest.captured_at,
-                                            ).toLocaleString()}{' '}
-                                            with snapshot age{' '}
-                                            {formatAge(
-                                                billing.snapshot_age_minutes,
-                                            )}
-                                            . This refreshes every 5 minutes,
-                                            not continuously.
-                                        </p>
-                                    </div>
-                                </>
+                                <p>
+                                    Your account includes the standard developer
+                                    workflow: projects, API keys, quickstart
+                                    docs, and the instant start flow.
+                                </p>
                             )}
+                            <p>
+                                Use the sidebar for day-to-day navigation and
+                                the dashboard for quick entry points.
+                            </p>
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Access split</CardTitle>
+                            <CardTitle>Start paths</CardTitle>
                             <CardDescription>
-                                Public versus admin-only information
+                                The fastest routes into the product
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-3 text-sm text-muted-foreground">
-                            <p>
-                                Public and regular-user views show workspace
-                                usage plus a PoofMQ-attributed estimate only.
-                            </p>
-                            <p>
-                                Admin-only views include service-level usage,
-                                invoice totals, credits, ledger detail, and
-                                operational observability.
-                            </p>
-                            {auth.is_admin ? (
-                                <p>
-                                    Your account can open the admin funding
-                                    page.
-                                </p>
-                            ) : (
-                                <p>
-                                    Your account does not receive internal cost
-                                    breakdowns.
-                                </p>
-                            )}
+                        <CardContent className="space-y-3">
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="w-full"
+                            >
+                                <Link href={developersIndex()}>
+                                    Open developer guides
+                                </Link>
+                            </Button>
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="w-full"
+                            >
+                                <Link href={docsQuickstart.url()}>
+                                    Open quickstart docs
+                                </Link>
+                            </Button>
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="w-full"
+                            >
+                                <Link href={projectsIndex()}>
+                                    Manage projects
+                                </Link>
+                            </Button>
                         </CardContent>
                     </Card>
                 </div>
@@ -367,6 +225,14 @@ export default function Dashboard({ funding, billing, admin }: DashboardProps) {
                                         ? `x${admin.capacity.boost_multiplier}`
                                         : 'inactive'}
                                 </p>
+                                {admin.capacity.boost_expires_at !== null && (
+                                    <p>
+                                        Boost expires:{' '}
+                                        {new Date(
+                                            admin.capacity.boost_expires_at,
+                                        ).toLocaleString()}
+                                    </p>
+                                )}
                             </CardContent>
                         </Card>
 
@@ -392,12 +258,28 @@ export default function Dashboard({ funding, billing, admin }: DashboardProps) {
                                     %
                                 </p>
                                 <p>
-                                    Burn rate:{' '}
+                                    Avg push latency:{' '}
                                     {
                                         admin.observability.metrics
-                                            .burn_rate_cents_per_day
+                                            .avg_push_latency_ms
                                     }{' '}
-                                    cents/day
+                                    ms
+                                </p>
+                                <p>
+                                    Avg pop latency:{' '}
+                                    {
+                                        admin.observability.metrics
+                                            .avg_pop_latency_ms
+                                    }{' '}
+                                    ms
+                                </p>
+                                <p>
+                                    Redis memory:{' '}
+                                    {
+                                        admin.observability.metrics
+                                            .redis_memory_bytes
+                                    }{' '}
+                                    bytes
                                 </p>
                                 <p>
                                     Alerts: {admin.observability.alerts.length}
