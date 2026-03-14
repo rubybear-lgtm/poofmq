@@ -613,7 +613,7 @@ const file_poofmq_v1_poofmq_proto_rawDesc = "" +
 	" ENCRYPTION_MODE_CLIENT_ENCRYPTED\x10\x032\xf3\x01\n" +
 	"\fQueueService\x12p\n" +
 	"\x04Push\x12\x1d.poofmq.v1.PushMessageRequest\x1a\x1e.poofmq.v1.PushMessageResponse\")\x82\xd3\xe4\x93\x02#:\x01*\"\x1e/v1/queues/{queue_id}/messages\x12q\n" +
-	"\x03Pop\x12\x1c.poofmq.v1.PopMessageRequest\x1a\x1d.poofmq.v1.PopMessageResponse\"-\x82\xd3\xe4\x93\x02':\x01*\"\"/v1/queues/{queue_id}/messages:popB6Z4github.com/rubyapps/poofmq/gen/go/poofmq/v1;poofmqv1b\x06proto3"
+	"\x03Pop\x12\x1c.poofmq.v1.PopMessageRequest\x1a\x1d.poofmq.v1.PopMessageResponse\"-\x82\xd3\xe4\x93\x02':\x01*\"\"/v1/queues/{queue_id}/messages:popB;Z9github.com/rubybear-lgtm/poofmq/gen/go/poofmq/v1;poofmqv1b\x06proto3"
 
 var (
 	file_poofmq_v1_poofmq_proto_rawDescOnce sync.Once
