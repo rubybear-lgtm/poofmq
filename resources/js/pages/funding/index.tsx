@@ -77,7 +77,7 @@ export default function FundingPage({ funding, billing }: Props) {
                                 PoofMQ funding
                             </p>
                             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                                Public funding summary
+                                Funding summary
                             </h1>
                             <p className="max-w-2xl text-sm text-muted-foreground">
                                 High-level funding status derived from Railway

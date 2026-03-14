@@ -3,7 +3,6 @@ import AppLogo from '@/components/app-logo';
 import { QuickstartContent } from '@/components/quickstart-content';
 import { dashboard, home, login } from '@/routes';
 import { quickstart as docsQuickstart } from '@/routes/docs';
-import { index as fundingIndex } from '@/routes/funding';
 import { index as startIndex } from '@/routes/start';
 
 export default function Quickstart() {
@@ -28,12 +27,6 @@ export default function Quickstart() {
                             className="hover:text-foreground"
                         >
                             Start instantly
-                        </Link>
-                        <Link
-                            href={fundingIndex()}
-                            className="hover:text-foreground"
-                        >
-                            Public funding
                         </Link>
                         <a
                             href="https://github.com/tortolero-ruben/poofmq"

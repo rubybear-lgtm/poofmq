@@ -1,12 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import {
-    BookOpen,
-    Folder,
-    LayoutGrid,
-    Menu,
-    Search,
-    WalletCards,
-} from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -43,7 +36,7 @@ import { cn, toUrl } from '@/lib/utils';
 import type { BreadcrumbItem, NavItem } from '@/types';
 import { dashboard } from '@/routes';
 import { quickstart as docsQuickstart } from '@/routes/docs';
-import { admin as fundingAdmin, index as fundingIndex } from '@/routes/funding';
+import { admin as fundingAdmin } from '@/routes/funding';
 
 const REPOSITORY_URL = 'https://github.com/tortolero-ruben/poofmq';
 
@@ -52,11 +45,6 @@ type Props = {
 };
 
 const rightNavItems: NavItem[] = [
-    {
-        title: 'Public Funding',
-        href: fundingIndex(),
-        icon: WalletCards,
-    },
     {
         title: 'Repository',
         href: REPOSITORY_URL,

@@ -5,7 +5,6 @@ import {
     FolderGit2,
     KeyRound,
     LayoutGrid,
-    WalletCards,
     FolderKanban,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
@@ -26,7 +25,7 @@ import { dashboard } from '@/routes';
 import { index as apiKeysIndex } from '@/routes/api-keys';
 import { index as developersIndex } from '@/routes/developers';
 import { quickstart as docsQuickstart } from '@/routes/docs';
-import { admin as fundingAdmin, index as fundingIndex } from '@/routes/funding';
+import { admin as fundingAdmin } from '@/routes/funding';
 import { index as projectsIndex } from '@/routes/projects';
 
 const REPOSITORY_URL = 'https://github.com/tortolero-ruben/poofmq';
@@ -80,14 +79,7 @@ export function AppSidebar() {
               ...mainNavItems.slice(3),
           ]
         : mainNavItems;
-    const footerItems = [
-        {
-            title: 'Public Funding',
-            href: fundingIndex(),
-            icon: WalletCards,
-        },
-        ...footerNavItems,
-    ];
+    const footerItems = footerNavItems;
 
     return (
         <Sidebar collapsible="icon" variant="inset">

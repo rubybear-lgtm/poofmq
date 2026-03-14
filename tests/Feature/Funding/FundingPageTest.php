@@ -5,7 +5,7 @@ use App\Models\RailwayBillingSnapshot;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
-it('renders the public funding page with funding and billing props', function () {
+it('renders the funding page with funding and billing props', function () {
     config()->set('services.donations.donation_url', 'https://ko-fi.com/poofmq');
 
     DonationLedgerEntry::factory()->create([

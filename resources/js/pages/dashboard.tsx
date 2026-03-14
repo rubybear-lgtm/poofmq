@@ -134,9 +134,7 @@ export default function Dashboard({ funding, billing, admin }: DashboardProps) {
                                 variant="outline"
                                 className="w-full sm:w-auto"
                             >
-                                <Link href={fundingIndex()}>
-                                    Public funding page
-                                </Link>
+                                <Link href={fundingIndex()}>Funding page</Link>
                             </Button>
                             {auth.is_admin && (
                                 <Button asChild className="w-full sm:w-auto">
