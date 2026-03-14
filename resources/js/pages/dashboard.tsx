@@ -1,5 +1,16 @@
 import { Head, Link, usePage } from '@inertiajs/react';
+import type { InertiaLinkProps } from '@inertiajs/react';
+import type { LucideIcon } from 'lucide-react';
+import {
+    Activity,
+    BookOpenCheck,
+    CheckCircle2,
+    FolderPlus,
+    KeyRound,
+    PencilLine,
+} from 'lucide-react';
 import KoFiButton from '@/components/ko-fi-button';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -9,6 +20,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
 import { index as apiKeysIndex } from '@/routes/api-keys';
@@ -42,6 +54,18 @@ type Observability = {
 };
 
 type DashboardProps = {
+    onboarding: {
+        projectCount: number;
+        apiKeyCount: number;
+    };
+    recentActivity: Array<{
+        id: string;
+        type: 'api_key_created' | 'project_created' | 'project_updated';
+        title: string;
+        description: string;
+        href: string;
+        occurred_at: string;
+    }>;
     admin: {
         capacity: Capacity;
         observability: Observability;
@@ -55,11 +79,74 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Dashboard({ admin }: DashboardProps) {
+function formatCount(value: number, singular: string, plural: string): string {
+    return value === 1 ? `1 ${singular}` : `${value} ${plural}`;
+}
+
+export default function Dashboard({
+    admin,
+    onboarding,
+    recentActivity,
+}: DashboardProps) {
     const { auth, donationUrl } = usePage().props as {
         auth: { is_admin: boolean };
         donationUrl: string | null;
     };
+    const checklistItems: Array<{
+        key: string;
+        complete: boolean;
+        title: string;
+        description: string;
+        href: NonNullable<InertiaLinkProps['href']>;
+        cta: string;
+        icon: LucideIcon;
+    }> = [
+        {
+            key: 'project',
+            complete: onboarding.projectCount > 0,
+            title: 'Create a project',
+            description:
+                onboarding.projectCount > 0
+                    ? `${formatCount(onboarding.projectCount, 'active project', 'active projects')} ready for scoped work.`
+                    : 'Start by creating a project so keys and workloads stay separated.',
+            href: projectsIndex(),
+            cta:
+                onboarding.projectCount > 0
+                    ? 'Manage projects'
+                    : 'Create your first project',
+            icon: FolderPlus,
+        },
+        {
+            key: 'api-key',
+            complete: onboarding.apiKeyCount > 0,
+            title: 'Generate an API key',
+            description:
+                onboarding.apiKeyCount > 0
+                    ? `${formatCount(onboarding.apiKeyCount, 'active API key', 'active API keys')} available for your integrations.`
+                    : 'Generate a project-scoped API key once you have a project ready.',
+            href: onboarding.apiKeyCount > 0 ? apiKeysIndex() : projectsIndex(),
+            cta:
+                onboarding.apiKeyCount > 0
+                    ? 'Review API keys'
+                    : 'Generate from a project',
+            icon: KeyRound,
+        },
+        {
+            key: 'docs',
+            complete: onboarding.projectCount > 0 && onboarding.apiKeyCount > 0,
+            title: 'Run the quickstart',
+            description:
+                onboarding.projectCount > 0 && onboarding.apiKeyCount > 0
+                    ? 'Your account is ready for a full quickstart pass with a real project and key.'
+                    : 'Use the quickstart guide to wire up your first push and pop flow end to end.',
+            href: docsQuickstart.url(),
+            cta: 'Open quickstart docs',
+            icon: BookOpenCheck,
+        },
+    ];
+    const completedChecklistSteps = checklistItems.filter(
+        (item) => item.complete,
+    ).length;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -73,12 +160,32 @@ export default function Dashboard({ admin }: DashboardProps) {
                                 PoofMQ dashboard
                             </p>
                             <h1 className="text-2xl font-semibold tracking-tight">
-                                Manage the core developer workflow
+                                Move from first login to a working integration
                             </h1>
                             <p className="text-sm text-muted-foreground">
-                                Jump into projects, API keys, docs, and the
-                                instant start flow from one place.
+                                Projects, API keys, docs, and the developer
+                                workflow are all reachable from here without
+                                losing context.
                             </p>
+                            <div className="flex flex-wrap gap-2 pt-2">
+                                <Badge variant="secondary">
+                                    {formatCount(
+                                        onboarding.projectCount,
+                                        'project',
+                                        'projects',
+                                    )}
+                                </Badge>
+                                <Badge variant="secondary">
+                                    {formatCount(
+                                        onboarding.apiKeyCount,
+                                        'active key',
+                                        'active keys',
+                                    )}
+                                </Badge>
+                                <Badge variant="outline">
+                                    {completedChecklistSteps}/3 setup steps
+                                </Badge>
+                            </div>
                         </div>
                         <div className="grid w-full gap-3 sm:grid-cols-2 xl:w-auto">
                             <Button
@@ -137,67 +244,170 @@ export default function Dashboard({ admin }: DashboardProps) {
                 <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Account access</CardTitle>
-                            <CardDescription>
-                                What your current session can reach from the
-                                dashboard
-                            </CardDescription>
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div className="space-y-1">
+                                    <CardTitle>Getting started</CardTitle>
+                                    <CardDescription>
+                                        A lightweight checklist for the first
+                                        useful PoofMQ session.
+                                    </CardDescription>
+                                </div>
+                                <Badge variant="secondary">
+                                    {completedChecklistSteps}/3 complete
+                                </Badge>
+                            </div>
                         </CardHeader>
-                        <CardContent className="space-y-4 text-sm text-muted-foreground">
-                            {auth.is_admin ? (
-                                <p>
-                                    Your account includes internal admin panels
-                                    for capacity controls and observability.
-                                </p>
-                            ) : (
-                                <p>
-                                    Your account includes the standard developer
-                                    workflow: projects, API keys, quickstart
-                                    docs, and the instant start flow.
-                                </p>
+                        <CardContent className="space-y-4">
+                            {checklistItems.map(
+                                ({
+                                    complete,
+                                    cta,
+                                    description,
+                                    href,
+                                    icon: Icon,
+                                    key,
+                                    title,
+                                }) => (
+                                    <div
+                                        key={key}
+                                        className="flex gap-4 rounded-2xl border border-border/70 bg-muted/20 p-4"
+                                    >
+                                        <div
+                                            className={cn(
+                                                'flex size-10 shrink-0 items-center justify-center rounded-xl border',
+                                                complete
+                                                    ? 'border-primary/20 bg-primary/10 text-primary'
+                                                    : 'border-border bg-background text-muted-foreground',
+                                            )}
+                                        >
+                                            {complete ? (
+                                                <CheckCircle2 className="size-5" />
+                                            ) : (
+                                                <Icon className="size-5" />
+                                            )}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <p className="font-medium text-foreground">
+                                                    {title}
+                                                </p>
+                                                <Badge
+                                                    variant={
+                                                        complete
+                                                            ? 'secondary'
+                                                            : 'outline'
+                                                    }
+                                                >
+                                                    {complete
+                                                        ? 'Done'
+                                                        : 'Next up'}
+                                                </Badge>
+                                            </div>
+                                            <p className="text-sm text-muted-foreground">
+                                                {description}
+                                            </p>
+                                            <Button
+                                                asChild
+                                                variant={
+                                                    complete
+                                                        ? 'outline'
+                                                        : 'default'
+                                                }
+                                                size="sm"
+                                            >
+                                                <Link href={href}>{cta}</Link>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ),
                             )}
-                            <p>
-                                Use the sidebar for day-to-day navigation and
-                                the dashboard for quick entry points.
-                            </p>
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Start paths</CardTitle>
+                            <CardTitle>Recent activity</CardTitle>
                             <CardDescription>
-                                The fastest routes into the product
+                                New projects, key generation, and dashboard
+                                momentum.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-3">
-                            <Button
-                                asChild
-                                variant="outline"
-                                className="w-full"
-                            >
-                                <Link href={developersIndex()}>
-                                    Open developer guides
-                                </Link>
-                            </Button>
-                            <Button
-                                asChild
-                                variant="outline"
-                                className="w-full"
-                            >
-                                <Link href={docsQuickstart.url()}>
-                                    Open quickstart docs
-                                </Link>
-                            </Button>
-                            <Button
-                                asChild
-                                variant="outline"
-                                className="w-full"
-                            >
-                                <Link href={projectsIndex()}>
-                                    Manage projects
-                                </Link>
-                            </Button>
+                        <CardContent className="space-y-4">
+                            {recentActivity.length > 0 ? (
+                                recentActivity.map((item) => {
+                                    const ActivityIcon =
+                                        item.type === 'api_key_created'
+                                            ? KeyRound
+                                            : item.type === 'project_updated'
+                                              ? PencilLine
+                                              : FolderPlus;
+
+                                    return (
+                                        <Link
+                                            key={item.id}
+                                            href={item.href}
+                                            className="block rounded-2xl border border-border/70 bg-muted/20 p-4 transition-colors hover:border-primary/30 hover:bg-muted/40"
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground">
+                                                    <ActivityIcon className="size-5" />
+                                                </div>
+                                                <div className="min-w-0 space-y-1">
+                                                    <p className="font-medium text-foreground">
+                                                        {item.title}
+                                                    </p>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {item.description}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {new Date(
+                                                            item.occurred_at,
+                                                        ).toLocaleString()}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    );
+                                })
+                            ) : (
+                                <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-5 text-sm text-muted-foreground">
+                                    <div className="flex items-start gap-3">
+                                        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground">
+                                            <Activity className="size-5" />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <p className="font-medium text-foreground">
+                                                No recent activity yet
+                                            </p>
+                                            <p>
+                                                Create a project or generate
+                                                your first API key to give the
+                                                dashboard a heartbeat.
+                                            </p>
+                                            <div className="flex flex-wrap gap-3">
+                                                <Button asChild size="sm">
+                                                    <Link
+                                                        href={projectsIndex()}
+                                                    >
+                                                        Open projects
+                                                    </Link>
+                                                </Button>
+                                                <Button
+                                                    asChild
+                                                    size="sm"
+                                                    variant="outline"
+                                                >
+                                                    <Link
+                                                        href={developersIndex()}
+                                                    >
+                                                        Developer guides
+                                                    </Link>
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>

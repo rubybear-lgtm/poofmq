@@ -3,6 +3,7 @@ import {
     ArrowUpRight,
     Check,
     Code2,
+    Copy,
     FileCode,
     Gauge,
     KeyRound,
@@ -653,11 +654,16 @@ function CodeBlock({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+                    className="h-7 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground"
                     onClick={() => {
                         void copyToClipboard(code);
                     }}
                 >
+                    {isCopied ? (
+                        <Check className="size-3.5" />
+                    ) : (
+                        <Copy className="size-3.5" />
+                    )}
                     {isCopied ? 'Copied' : 'Copy'}
                 </Button>
             </div>

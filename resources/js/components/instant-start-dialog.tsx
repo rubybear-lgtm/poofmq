@@ -1,4 +1,5 @@
 import { usePage } from '@inertiajs/react';
+import { Check, Copy } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
@@ -12,7 +13,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { useClipboard } from '@/hooks/use-clipboard';
-import { jsonHeaders } from '@/lib/utils';
+import { jsonHeaders, shouldBypassTurnstile } from '@/lib/utils';
 
 type ValidationErrors = Record<string, string[]>;
 
@@ -83,9 +84,7 @@ export default function InstantStartDialog({
     const [copiedValue, copyToClipboard] = useClipboard();
     const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
     const turnstileWidgetIdRef = useRef<string | null>(null);
-    const isLocalDevelopment =
-        typeof window !== 'undefined' &&
-        ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+    const isLocalDevelopment = shouldBypassTurnstile();
 
     const copiedId = useMemo(
         () => queue !== null && copiedValue === queue.queue_id,
@@ -302,7 +301,8 @@ export default function InstantStartDialog({
                                     Local development bypass active
                                 </AlertTitle>
                                 <AlertDescription>
-                                    Turnstile is skipped on localhost.
+                                    Turnstile is skipped on local development
+                                    domains.
                                 </AlertDescription>
                             </Alert>
                         ) : siteKey === null ? (
@@ -362,8 +362,13 @@ export default function InstantStartDialog({
                                 onClick={() => {
                                     void copyToClipboard(queue.queue_id);
                                 }}
-                                className="w-full"
+                                className="w-full gap-2"
                             >
+                                {copiedId ? (
+                                    <Check className="size-4" />
+                                ) : (
+                                    <Copy className="size-4" />
+                                )}
                                 {copiedId ? 'Copied ID' : 'Copy ID'}
                             </Button>
                         </div>
@@ -382,8 +387,13 @@ export default function InstantStartDialog({
                                 onClick={() => {
                                     void copyToClipboard(queue.queue_url);
                                 }}
-                                className="w-full"
+                                className="w-full gap-2"
                             >
+                                {copiedUrl ? (
+                                    <Check className="size-4" />
+                                ) : (
+                                    <Copy className="size-4" />
+                                )}
                                 {copiedUrl ? 'Copied URL' : 'Copy URL'}
                             </Button>
                         </div>

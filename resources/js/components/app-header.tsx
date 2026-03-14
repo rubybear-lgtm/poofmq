@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
@@ -33,7 +33,7 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn, toUrl } from '@/lib/utils';
-import type { BreadcrumbItem, NavItem } from '@/types';
+import type { Auth, BreadcrumbItem, NavItem } from '@/types';
 import { dashboard } from '@/routes';
 import { quickstart as docsQuickstart } from '@/routes/docs';
 
@@ -61,6 +61,9 @@ const activeItemStyles = 'bg-accent/50 text-foreground dark:text-foreground';
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const getInitials = useInitials();
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
+    const { auth } = usePage().props as {
+        auth: Auth;
+    };
     const mainNavItems: NavItem[] = [
         {
             title: 'Dashboard',
@@ -220,7 +223,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 >
                                     <Avatar className="size-8 overflow-hidden rounded-full">
                                         <AvatarImage
-                                            src={auth.user.avatar}
+                                            src={auth.user.avatar ?? undefined}
                                             alt={auth.user.name}
                                         />
                                         <AvatarFallback className="rounded-full">

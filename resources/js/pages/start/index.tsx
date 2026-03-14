@@ -1,4 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
+import { Check, Copy } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
@@ -6,7 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useClipboard } from '@/hooks/use-clipboard';
 import AuthLayout from '@/layouts/auth-layout';
-import { jsonHeaders } from '@/lib/utils';
+import { jsonHeaders, shouldBypassTurnstile } from '@/lib/utils';
 import { home } from '@/routes';
 import { store as storeInstantQueue } from '@/routes/api/instant/queues';
 
@@ -71,6 +72,7 @@ export default function SandboxCreatePage() {
     const [copiedValue, copyToClipboard] = useClipboard();
     const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
     const turnstileWidgetIdRef = useRef<string | null>(null);
+    const isLocalDevelopment = shouldBypassTurnstile();
 
     const copiedId = useMemo(
         () => queue !== null && copiedValue === queue.queue_id,
@@ -154,7 +156,7 @@ export default function SandboxCreatePage() {
     }, [clearTurnstileError, removeTurnstile, siteKey]);
 
     useEffect(() => {
-        if (siteKey === null) {
+        if (siteKey === null || isLocalDevelopment) {
             return;
         }
 
@@ -196,7 +198,7 @@ export default function SandboxCreatePage() {
             script.removeEventListener('load', handleLoad);
             removeTurnstile();
         };
-    }, [removeTurnstile, renderTurnstile, siteKey]);
+    }, [isLocalDevelopment, removeTurnstile, renderTurnstile, siteKey]);
 
     const handleCreateSandboxQueue = async (
         event: FormEvent<HTMLFormElement>,
@@ -211,7 +213,9 @@ export default function SandboxCreatePage() {
                 method: 'POST',
                 headers: jsonHeaders(),
                 body: JSON.stringify({
-                    turnstile_token: turnstileToken,
+                    turnstile_token: isLocalDevelopment
+                        ? 'local-development-bypass'
+                        : turnstileToken,
                 }),
             });
 
@@ -262,7 +266,17 @@ export default function SandboxCreatePage() {
 
             <form className="space-y-5" onSubmit={handleCreateSandboxQueue}>
                 <div className="grid gap-2">
-                    {siteKey === null ? (
+                    {isLocalDevelopment ? (
+                        <Alert>
+                            <AlertTitle>
+                                Local development bypass active
+                            </AlertTitle>
+                            <AlertDescription>
+                                Turnstile is skipped on local development
+                                domains.
+                            </AlertDescription>
+                        </Alert>
+                    ) : siteKey === null ? (
                         <Alert variant="destructive">
                             <AlertDescription>
                                 Turnstile site key is not configured.
@@ -283,7 +297,10 @@ export default function SandboxCreatePage() {
 
                 <Button
                     type="submit"
-                    disabled={isSubmitting || turnstileToken.length === 0}
+                    disabled={
+                        isSubmitting ||
+                        (!isLocalDevelopment && turnstileToken.length === 0)
+                    }
                     className="h-12 w-full text-base"
                 >
                     {isSubmitting ? 'Creating queue...' : 'Create queue now'}
@@ -313,7 +330,13 @@ export default function SandboxCreatePage() {
                             onClick={() => {
                                 void copyToClipboard(queue.queue_id);
                             }}
+                            className="gap-2"
                         >
+                            {copiedId ? (
+                                <Check className="size-4" />
+                            ) : (
+                                <Copy className="size-4" />
+                            )}
                             {copiedId ? 'Copied ID' : 'Copy ID'}
                         </Button>
                     </div>
@@ -332,7 +355,13 @@ export default function SandboxCreatePage() {
                             onClick={() => {
                                 void copyToClipboard(queue.queue_url);
                             }}
+                            className="gap-2"
                         >
+                            {copiedUrl ? (
+                                <Check className="size-4" />
+                            ) : (
+                                <Copy className="size-4" />
+                            )}
                             {copiedUrl ? 'Copied URL' : 'Copy URL'}
                         </Button>
                     </div>

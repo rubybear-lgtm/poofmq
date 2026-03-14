@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -43,6 +44,18 @@ class User extends Authenticatable implements MustVerifyEmail
         $adminEmails = config('poofmq.admin_emails', []);
 
         return in_array(strtolower($this->email), $adminEmails, true);
+    }
+
+    /**
+     * Send the email verification notification when the feature is enabled.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        if (! config('fortify.email_verification_required')) {
+            return;
+        }
+
+        $this->notify(new VerifyEmail);
     }
 
     /**

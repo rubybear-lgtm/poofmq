@@ -42,3 +42,18 @@ export function jsonHeaders(): HeadersInit {
 
     return headers;
 }
+
+export function shouldBypassTurnstile(hostname?: string): boolean {
+    if (hostname === undefined) {
+        if (typeof window === 'undefined') {
+            return false;
+        }
+
+        hostname = window.location.hostname;
+    }
+
+    return (
+        ['localhost', '127.0.0.1', '::1'].includes(hostname) ||
+        hostname.endsWith('.test')
+    );
+}

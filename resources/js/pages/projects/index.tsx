@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { Check, Copy } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import Heading from '@/components/heading';
@@ -867,7 +868,14 @@ export default function Projects({ projects: initialProjects }: Props) {
                                             generatedApiKey.plainTextKey,
                                         );
                                     }}
+                                    className="gap-2"
                                 >
+                                    {copiedValue ===
+                                    generatedApiKey.plainTextKey ? (
+                                        <Check className="size-4" />
+                                    ) : (
+                                        <Copy className="size-4" />
+                                    )}
                                     {copiedValue ===
                                     generatedApiKey.plainTextKey
                                         ? 'Copied'

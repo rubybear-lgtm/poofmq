@@ -14,3 +14,11 @@ it('renders the home page donation call to action without javascript errors', fu
         ->assertSee('Support me on Ko-fi')
         ->assertNoJavaScriptErrors();
 });
+
+it('shows the local turnstile bypass state in the developer key dialog', function () {
+    visit('/')
+        ->click('Get free dev key')
+        ->assertSee('Local development bypass active')
+        ->assertSee('Turnstile is skipped on local')
+        ->assertNoJavaScriptErrors();
+});

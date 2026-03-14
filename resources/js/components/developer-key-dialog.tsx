@@ -1,4 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
+import { Check, Copy } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
@@ -15,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useClipboard } from '@/hooks/use-clipboard';
-import { jsonHeaders } from '@/lib/utils';
+import { jsonHeaders, shouldBypassTurnstile } from '@/lib/utils';
 import { login } from '@/routes';
 
 type ValidationErrors = Record<string, string[]>;
@@ -90,9 +91,7 @@ export default function DeveloperKeyDialog({
     const [copiedValue, copyToClipboard] = useClipboard();
     const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
     const turnstileWidgetIdRef = useRef<string | null>(null);
-    const isLocalDevelopment =
-        typeof window !== 'undefined' &&
-        ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+    const isLocalDevelopment = shouldBypassTurnstile();
 
     const copiedKey = useMemo(
         () => success !== null && copiedValue === success.plain_text_key,
@@ -347,7 +346,8 @@ export default function DeveloperKeyDialog({
                                             Local development bypass active
                                         </AlertTitle>
                                         <AlertDescription>
-                                            Turnstile is skipped on localhost.
+                                            Turnstile is skipped on local
+                                            development domains.
                                         </AlertDescription>
                                     </Alert>
                                 ) : siteKey === null ? (
@@ -447,8 +447,13 @@ export default function DeveloperKeyDialog({
                                         success.plain_text_key,
                                     );
                                 }}
-                                className="h-11 w-full"
+                                className="h-11 w-full gap-2"
                             >
+                                {copiedKey ? (
+                                    <Check className="size-4" />
+                                ) : (
+                                    <Copy className="size-4" />
+                                )}
                                 {copiedKey ? 'Copied key' : 'Copy key'}
                             </Button>
                         </div>
@@ -468,9 +473,16 @@ export default function DeveloperKeyDialog({
                                 onClick={() => {
                                     void copyToClipboard(sdkSnippet);
                                 }}
-                                className="h-12 flex-1 text-base"
+                                className="h-12 flex-1 gap-2 text-base"
                             >
-                                Copy snippet
+                                {copiedValue === sdkSnippet ? (
+                                    <Check className="size-4" />
+                                ) : (
+                                    <Copy className="size-4" />
+                                )}
+                                {copiedValue === sdkSnippet
+                                    ? 'Copied snippet'
+                                    : 'Copy snippet'}
                             </Button>
 
                             <a
