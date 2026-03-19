@@ -224,14 +224,14 @@ export default function Dashboard({
                     {donationUrl && (
                         <div className="rounded-2xl border border-[#72a4f2]/40 bg-linear-to-br from-[#72a4f2]/14 via-background to-background p-5 shadow-[0_18px_60px_rgba(114,164,242,0.12)]">
                             <p className="text-xs font-semibold tracking-[0.2em] text-[#72a4f2] uppercase">
-                                Support development
+                                Tip jar
                             </p>
                             <h2 className="mt-2 text-xl font-semibold tracking-tight">
-                                Help keep PoofMQ moving
+                                If PoofMQ saved you time
                             </h2>
                             <p className="mt-2 text-sm text-muted-foreground">
-                                If PoofMQ saves you time, support ongoing
-                                development on Ko-fi.
+                                Leave a tip on Ko-fi to help cover hosting and
+                                ongoing development.
                             </p>
                             <KoFiButton
                                 href={donationUrl}

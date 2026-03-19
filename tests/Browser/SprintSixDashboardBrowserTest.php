@@ -15,7 +15,8 @@ it('renders sprint 6 dashboard panels without javascript errors', function () {
 
     visit('/dashboard')
         ->assertSee('Dashboard')
-        ->assertSee('Support me on Ko-fi')
+        ->assertSee('Leave a tip on Ko-fi')
+        ->assertDontSee('Support me on Ko-fi')
         ->assertDontSee('Funding overview')
         ->assertDontSee('Net funding')
         ->assertDontSee('Current spend')
