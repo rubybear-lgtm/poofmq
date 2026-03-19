@@ -12,7 +12,7 @@ type KoFiButtonProps = {
 export default function KoFiButton({
     href,
     className,
-    label = 'Support me on Ko-fi',
+    label = 'Leave a tip on Ko-fi',
     size = 'default',
 }: KoFiButtonProps) {
     if (!href) {

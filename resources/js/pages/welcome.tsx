@@ -243,18 +243,17 @@ export default function Welcome({
                                     <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                                         <div className="max-w-2xl space-y-2">
                                             <p className="text-xs font-semibold tracking-[0.22em] text-[#72a4f2] uppercase">
-                                                Community funded
+                                                Tip jar
                                             </p>
                                             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
                                                 Keep PoofMQ free for the next
                                                 developer.
                                             </h2>
                                             <p className="text-sm text-muted-foreground sm:text-base">
-                                                PoofMQ stays online because the
-                                                community helps cover hosting
-                                                and queue infrastructure. If it
-                                                saves you time, support it on
-                                                Ko-fi.
+                                                PoofMQ stays online because tips
+                                                help cover hosting and queue
+                                                infrastructure. If it saves you
+                                                time, leave a tip on Ko-fi.
                                             </p>
                                         </div>
                                         <KoFiButton
@@ -307,11 +306,11 @@ export default function Welcome({
                                 </span>
                             </span>
                             <h3 className="mb-3 text-xl font-bold tracking-tight">
-                                100% community funded
+                                Backed by user tips
                             </h3>
                             <p className="text-muted-foreground">
-                                No VC strings attached. Subsidized by the
-                                community to keep the servers spinning for all.
+                                No VC strings attached. User tips help keep the
+                                servers spinning for everyone.
                             </p>
                         </div>
                         <div className="group p-6 transition-colors hover:bg-muted/50 sm:p-8">
